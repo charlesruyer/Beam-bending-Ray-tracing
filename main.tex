@@ -45,20 +45,23 @@
 \affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
 
 \begin{abstract}
-The advection by a flow of ponderomotively  driven density fluctuations may lead to the deflection of a laser pulse. This effect,  also called beam bending, may modify the irradiation geometry and energy deposition in high energy laser plasma experiments. A kinetic modeling of beam-bending of a small Gaussian laser pulse is proposed and validated by mean of "particle-in-cell" simulations over a vast parametric domain, demonstrating the importance of capturing correctly the kinetic damping of ion-acoustic waves. This simple modeling is further extended to spatially smoothed laser beam to describe the speckle scale beam-bending. A Monte-Carlo method is proposed to include this model on classical ray tracing schemes. A quantitative comparison with large scale "particle-in-cell" simulations is successfully carried. 
+A Monte-Carlo method is proposed to include this model on classical ray tracing schemes. A quantitative comparison with large scale "particle-in-cell" simulations is successfully carried. 
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}
+\textcolor{red}{
 The study of many astrophysical phenomenon \cite{Drake_2012}, High-energy-density physics \cite{Drake2006}, and inertial confinement fusion \cite{Lindl_2004,He_2007,Cavailler_2005} are performed using multi-kilojoule laser pulses interaction with plasmas. With such beams, the matter can be heated to millions of degrees with Mega to Gigabar pressure, hence providing unique plasma conditions on earth. Quantitative understanding of 
-multi-kilojoule laser pulse propagation through plasma is mandatory to correctly interpret all these experiments. In particular, a great effort has been dedicated to understand the mechanisms responsible of the plasma heating,  and  predicting various instabilities that may arise during the laser pulse propagation such as stimulated Raman or Brillouin scattering  \cite{Shen_1965,Forslund_1973,POP_Liu_2009,hao_2013}, cross-beam energy transfer \cite{hao_2016}, two-plasmon decay  \cite{Dubois_1995,Russell_2001} or self-focusing  \cite{Wagner_1968}.
+multi-kilojoule laser pulse propagation through plasma is mandatory to correctly interpret all these experiments. In particular, a great effort has been dedicated to understand the mechanisms responsible of the plasma heating,  and  predicting various instabilities that may arise during the laser pulse propagation such as stimulated Raman or Brillouin scattering  \cite{Shen_1965,Forslund_1973,POP_Liu_2009,hao_2013}, cross-beam energy transfer \cite{hao_2016}, two-plasmon decay  \cite{Dubois_1995,Russell_2001} or self-focusing  \cite{Wagner_1968}.}
 
+
+\textcolor{red}{
 In most experiments involving  nanosecond-long pulses, optical smoothing techniques  such as the Random-Phase-Plates (RPP) and the smoothing by spectral dispersion (SSD), are often used in order to reach a satisfactorily control of the laser intensity profile \cite{Kato_1984}.
 These techniques, which usually  consist in degrading the spatial (RPP) and temporal coherence (SSD) of the electromagnetic wave,  result in a diffraction pattern  with intensity fluctuations on the scale of a few wavelength : the so-called speckles. 
 Different experimental and theoretical studies unravelled the non-negligible impact of these micron-scale intensity fluctuations on macroscopic quantities such as the energy deposition region  \cite[]{POP_Delamater_1996,Huser_2009}, the scattering direction  of the light wave \cite{Epstein_1986,PRL_Moody_96,POP_Debayle_2018,POP_Duluc_2019,Yin_2019,POP_Huller_2020} or the amount of expected reflectivity \cite[]{POP_Laffite_2010,PRL_Rousseaux_2016,POP_Masson_2016,Glize_2017,Winjum_2019}.
 It is therefore of critical importance in our modeling of laser-plasma interaction experiments to capture the diffraction pattern and the associated hot-spot fluctuations. 
-However, reconciling the light-wave micron or sub-micron wavelength and  femtosecond temporal period with many experimental  hydrodynamical scales  (millimeters and nanoseconds) is extremely challenging in a self-consistent numerical manner. 
+However, reconciling the light-wave micron or sub-micron wavelength and  femtosecond temporal period with many experimental  hydrodynamical scales  (millimeters and nanoseconds) is extremely challenging in a self-consistent numerical manner. }
 
 %More generally, a mojor issue of  laser-plasma interaction relevant for NIF-class facilities lies in the need of a better description of the light propagation in a large scale plasma, without resorting to a fine discretisation of the laser-wavelength that would  be prohibitive for modeling hydrodynamics scale experiments.
 Regarding the nanosecond and millimeter scales of interest here, a hydrodynamical description of the plasma can be coupled with Maxwell equations \cite{Berger_1995,Still_2006,Loiseau_2006, Huller_2006}, however these  formalisms may appear to be  too heavy numerically whenever  multi-dimensional effects,  solid-density physics or radiative phenomenons arise.
@@ -67,242 +70,116 @@ In such systems, we usually resort to a rough description of light \cite[]{POP_Z
 The proper description, by the ray tracing scheme,  of simple  light quantities  such as the intensity  of the wave or its local spectrum, is still an active area of research  \cite{Egorchenkov_2001, Colaitis_2014, Strozzi_2017}.
 Although a large effort is made in improving these schemes by including back or side scattering of the light caused by wave mixing processes \cite[]{Strozzi_2017,POP_Debayle_2019},  
 modeling the impact of plasma smoothing effects on the pulse propagation properties remains vastly unexplored \cite[]{POF_Anderson,POP_Still_2000,POP_Grech_2006,PRL_Grech_2009}.
-More specifically, we address in this paper the beam bending  of  a laser pulse, as studied in Refs. \cite{PRL_Hinkel_1996,POP_Rose_96,Vu_1997,POP_Rose_97,PRL_Montgomery} and which occurs when the ponderomotively driven density hole  during the propagation of a laser pulse is advected by the flow. It results,  due to a wave-guide effect, to the deflection of the electromagnetic wave off its original propagating axe. It is important to note that  this effect may take place in a perfectly homogeneous plasma and thus adds up to the usual refraction of light caused by density gradients. 
-We will first introduce an analytical model predicting the deflection angle, in both the asymptotic and transient regime, of a Gaussian laser pulse including the kinetic damping of acoustic waves and validated by  a large number of  Particle-in-cell (PIC) simulations. 
+
+\textcolor{red}{
+More specifically, we address in this paper the beam bending  of  a laser pulse, as studied in Refs. \cite{PRL_Hinkel_1996,POP_Rose_96,Vu_1997,POP_Rose_97,PRL_Montgomery} and which occurs when the ponderomotively driven density hole  during the propagation of a laser pulse is advected by the flow. It results,  due to a wave-guide effect, to the deflection of the electromagnetic wave off its original propagating axe. It is important to note that  this effect may take place in a perfectly homogeneous plasma and thus adds up to the usual refraction of light caused by density gradients. }
+We will first briefly recall and generalize to three dimension the modeling of Ref \cite[]{Ruyer_2020}, which predicts the deflection angle, in both the asymptotic and transient regime, of a Gaussian laser pulse including the kinetic damping of acoustic waves. 
 Proof will then be made that the kinetic  physics of  driven ion acoustic wave damping, essential to obtain accurate predictions, can be   included as a correction in the 
  the calculation of the ponderomotive force of interest for capturing the beam bending rates in fluid-based codes such as HERA or PF3D  \cite{Berger_1995,Still_2006,Loiseau_2006, Huller_2006}. 
-Our analytical  model  will then be extended to
+Our model  will then be extended to
 the ray-tracing description of the propagation of an energetic RPP-beam (without temporal smoothing), by
 combining the single-speckle scattering angle with a Monte Carlo modeling of the speckles distribution in vacuum. 
-A validation of our  predictions with both large scale PIC simulations and a paraxial and ponderomotively-corrected fluid codes will be carried,
-%The effect of temporal smoothing techniques on the bending dynamics will then be discussed, modeled and validated with large scale PIC simulations,
-followed by our concluding remarks and perspectives. Finally, the SI unit system is used and 2D Cartesian geometry only will be considered throughout this publication. 
+A validation of our  predictions with both large scale PIC simulations and a paraxial and ponderomotively-corrected fluid codes will be carried.
+\textcolor{red}{
+The effect of temporal smoothing techniques on the bending dynamics will then be discussed, modeled and validated with large scale PIC simulations,}
+followed by our concluding remarks and perspectives. Finally, the SI unit system is used throughout this publication and vectors are noted in bold symbols. 
 
-\section{Beam bending of a Gaussian laser pulse}\label{sec:gauss}
-\subsection{Asymptotic regime theory}
-For simplicity, we will assume subsequently  that the electromagnetic waves are forward propagating only, thus excluding any back-scattering. 
-Reference \cite{POP_Rose_96} models the beam bending in the hydrodynamical framework. Evidence is made that the ponderomotive driven acoustic perturbations, deformed and advected by the  flow, may significantly deflects the electromagnetic wave off its course. We address here the asymptotic limit eventually reached by a Gaussian pulse propagating in a flowing plasma, the transient regime will be discussed subsequently.
+\section{Beam bending of a Gaussian laser pulse in three dimension}\label{sec:gauss}
+\subsection{Kinetic theory}
+%For simplicity, we will assume  subsequently, as in Ref. \cite[]{Ruyer_2020},  that the electromagnetic waves are forward propagating only, thus excluding any back-scattering. 
+In reference \cite{POP_Rose_96}, proof is made that, in the small angle limit,  the transverse averaged laser wavevector, $ \langle \mathbf{k}_\perp\rangle_{k} $ and centro\"id, $ \langle \mathbf{r}_\perp \rangle_\perp$ may be related to the spatial profile of the  ponderomotively driven density fluctuations, $\delta n /n_0$, through,
+\begin{align}
+ \frac{1}{k_0}\frac{d \langle \mathbf{k}_\perp\rangle_{k}    }{d x}& =- \frac{1  }{2} \frac{n_0 }{n_c}   \left \langle \frac{\nabla_\perp \delta n }{n_0}  \right  \rangle_\perp   \, ,\label{eq:rose26}\\
+  \frac{d \langle \mathbf{r}_\perp\rangle_\perp    }{d x} &= \frac{ \langle k_y\rangle_{k}  }{k_0} \, ,\label{eq:rose24}
+\end{align}
+where $k_0=2\pi/\lambda_0$, $n_0$, $n_c$ are the laser wave vector in vacuum, electron and laser critical density respectively.
+We also introduced, $ \langle X\rangle_{k_\perp} $ and  $ \langle X\rangle_\perp $, the  average of $ X $ in the Fourier and the real space respectively, defined as
+\begin{align}
+\langle X \rangle_{k_\perp} &= \frac{\int X(\mathbf{k}_\perp) \vert E(\mathbf{k}_\perp,x,t) \vert^2 dk_\perp }{\int   \vert E(\mathbf{k}_\perp,x,t) \vert^2 dk_\perp}\, , \label{eq:kmoy}\\
+\langle X \rangle_\perp&= \frac{\int X(\mathbf{r}_\perp)\vert E(\mathbf{r}_\perp,x,t) \vert^2 dy }{\int   \vert E(\mathbf{r}_\perp,x,t) \vert^2 dy}\, , \label{eq:ymoy}
+\end{align}
+where $ E(k_\perp,x,t) $ is the transverse Fourier transform of the electric field.
 
-Let introduce,$ \langle X\rangle_{k_y} $ and  $ \langle X\rangle_y $, the  average of $ X $ in the Fourier and the real space respectively, defined as
-\begin{align}
-\langle X \rangle_{k_y} &= \frac{\int X(k_y) \vert E(k_y,x,t) \vert^2 dk_y }{\int   \vert E(k_y,x,t) \vert^2 dk_y}\, , \label{eq:kmoy}\\
-\langle X \rangle_{y}&= \frac{\int X(y)\vert E(y,x,t) \vert^2 dy }{\int   \vert E(y,x,t) \vert^2 dy}\, , \label{eq:ymoy}
-\end{align}
-where $ E(k_y,x,t) $ is the transverse Fourier transform of the electric field, Eqs. (24) and (26) of Ref.  \cite{POP_Rose_96} relates the  spatial evolution of $ \langle \bf{k}\rangle$ to  $\delta n(x,y,t)$, $ n_0$ and $n_c$ (the perturbed, averaged and critical electron density respectively) through 
-\begin{align}
- \frac{1}{k_0}\frac{d \langle k_y\rangle_{k}    }{d x}& =- \frac{1  }{2} \frac{n_0 }{n_c}   \left \langle \frac{\partial_y \delta n }{n_0}  \right  \rangle_y   \, ,\label{eq:rose26}\\
-  \frac{d \langle y\rangle_{y}    }{d x} &= \frac{ \langle k_y\rangle_{k}  }{k_0} \, ,\label{eq:rose24}
-\end{align}
-where $k_0$ is the laser wave vector in vacuum.
-
-The right-hand side of the Eq. \eqref{eq:rose26} vanishes when the density profile remain an even function of the transverse position $y$. In order to assess the influence of a flow on the ponderomotive density fluctuations, we will first introduce the perturbed velocity $v = v_d +\delta v$ and  make use of the conservation of density and momentum. To leading order in $\delta v$ and $\delta n$ and neglecting all longitudinal ($x$) spatial derivatives, we obtain 
-\begin{align}
-(\partial_t + v_d  \cdot \partial_y) \frac{  \delta n }{n_0} &= - \partial_y\delta v \, ,\label{eq:hydro1} \\
-(\partial_t + v_d  \cdot \partial_y) \delta v + 2\nu \delta v  &= - c_s^2\partial_y^2\left(\frac{  \delta n }{n_0} +  \Phi  \right) \, ,\label{eq:hydro2} 
-\end{align}
-where $ \Phi = I /(4v_g n_c T_e )$ is the normalized laser ponderomotive potential,  $c_s$, $v_g$ and $I$  are the plasma sound speed, laser group velocity and intensity respectively.
-The damping term, $\nu$, of Eq. \eqref{eq:hydro2} accounts for the ion acoustic wave damping mainly due to the Landau phase mixing process. The self-consistent description of this kinetic effect in the hydrodynamic equations remains a challenging problem. Different works suggest a fluid closure at order 3 or 4 is necessary to recover some kinetic behavior of the dispersion relation~\cite{PRL_Hammett_1990,POF_Chang_1992}. Yet, to simplify our analysis, we introduce empirically this friction term to describe the ion acoustic wave damping.
- Combining Eqs. \eqref{eq:hydro1} and \eqref{eq:hydro2} gives 
-\begin{align}
- \{ (c_s^2-v_d^2)\partial_y^2 -\partial_t \partial_t\}    \frac{  \delta n }{n_0} - 2 v_d \partial_y  \partial_t \frac{  \delta n }{n_0}   \nonumber \\
--2\nu  (\partial_t + v_d  \cdot \partial_y) \frac{  \delta n }{n_0}   = - c_s^2\partial_y^2 \Phi  \, .\label{eq:hydro3} 
-\end{align}
-The asymptotic limit ($\partial_t\equiv 0$) yields 
-\begin{align}
- (c_s^2-v_d^2)\partial_y^2    \frac{  \delta n }{n_0}  
--2\nu    v_d  \cdot \partial_y \frac{  \delta n }{n_0}   = - c_s^2\partial_y^2 \Phi  \, , \label{eq:hydro3b} 
-\end{align}
-showing that the density perturbation does not coincide with the ponderomotive potential when $\nu    v_d $ is not vanishing.
-In that context, Ref. \cite{POP_Rose_96,POP_Rose_97} showed that the beam bending rate in the fluid framework reads:
-\begin{equation}
-\frac{1}{k_0}\frac{d \langle k_y\rangle_{k}    }{d x} = \frac{K_\mathrm{rad} }{\sigma} \frac{n_0 }{n_c}  \frac{  I(k_y) }{ 2 v_g n_c T_e }  f(M_0,\gamma_0)\, ,\label{eq:dthetarose26}
-\end{equation}
-where $K_\mathrm{rad} \simeq 1.36$  and 
-\begin{equation}
- f(M,\gamma) =\frac{2 }{\pi }  \int_0^{\pi/2}\frac{ M \gamma \cos(\theta)^2  d\theta}{(1-M \cos(\theta)^2)^2 +4M^2 \gamma^2 \cos(\theta)^2}  \, .\label{eq:frose26}
-\end{equation}
-These predictions use the Landau ion acoustic damping rate in the free wave regime, i.e. assuming that the ponderomotively driven density perturbation propagates at the sound speed.
-
-However, in the asymptotic limit of interest here, \emph{i.e.} for a stationary laser beam, the density perturbation propagates, in the rest-frame of the plasma, at a velocity $-v_d\ne -c_s$ owing to the advection by the flow. Therefore, the usual  free-mode perturbation model fails to capture the adequate damping rate. However, the kinetic response of an acoustic-like perturbation to a ponderomotive potential has been derived in Ref.  \cite{POF_Drake_1973}  [Eq. (12)] for a Maxwellian plasma.
-Note that unlike Ref. \cite{POF_Drake_1973}, we use the convention $E=E_0\cos(k_0x-w_0t)$ (where $\omega_0$ is the laser frequency).
-Introducing the wave vector component $k_y$ transverse to the $x$-aligned laser propagating direction,  the density perturbation verifies and its magnitude $\vert k_y\vert$, 
-\begin{align}
- \frac{ \delta n (k_y) }{n_0}  &=   \frac{  I(k_y) }{ 8 v_g n_c T_e }  \mathcal{Z}'( \xi_e)   \frac{ 1- \frac{ \mathcal{Z}'( \xi_i)  }{ k_y^2\lambda_{Di}^2  }   }{  1- \frac{ \mathcal{Z}'( \xi_i)  }{ k_y^2\lambda_{Di}^2  }- \frac{ \mathcal{Z}'( \xi_e)  }{ k_y^2\lambda_{De}^2  } }    \, , \label{eq:drake}\\
-\xi_{e/i } &= \frac{   \omega- k_y v_d }{ 2^{1/2}  \vert k_y\vert }  \sqrt{ \frac{ m_{e/i } }{ T_{e/i }}  }  \label{eq:xiie}   \,  ,
-\end{align}
-We introduced $ \mathcal{Z}$, the plasma dispersion function \cite{Fried_Gell-Mann_1960} and its arguments $\xi_{e } $ and $\xi_{i }$, both proportional to the $\omega/\vert k_y \vert$. 
-Hence, in our case, we may use $\omega=k_yv_d$ in Eq. \eqref{eq:xiie} which gives 
-\begin{align}
-\xi_{e } &=\frac{   M_0 }{ 2^{1/2} }  \frac{k_y}{\vert k \vert }\sqrt{ \frac{ Z m_{e } }{ m_i }  } \sqrt{1+ \frac{\gamma_i T_i }{ ZT_e }  }   \, , \\
-\xi_{i } &= \frac{   M_0}{ 2^{1/2} }  \frac{k_y}{\vert k \vert }\sqrt{ \frac{Z T_{e } }{ T_{i }} +\gamma_i  }    \, ,
-\end{align}
-with $c_s=[(ZT_e+\gamma_i T_i)/m_i]^{1/2}$ and $\gamma_i$ the ion adiabatic index.
-Note that the self-consistent description of plasmas in PIC codes does not require any  fluid closure, hence the sound speed value is set by the kinetic dispersion relations  rather than a presumed  equation of states and thus do not necessarily co\"incide with the above relations. 
-Throughout this study, use will be made of  $\gamma_i=3$ for fluid simulations, as in most fluid-based laser-plasma interaction studies, although a difference is to be expected  regarding PIC simulation. The exact kinetic calculation of $\gamma_i$ is left for future work.
-
-As the length scale of the density fluctuations verify  $k\lambda_{Di} \ll 1 $, Eq.  \eqref{eq:drake} can be simplified to 
+For the case of interest here,  the length scale of the density fluctuations verify   $k\lambda_{Di} \ll 1 $ so that Eq. (12) of Ref.  \cite{POF_Drake_1973},  relating $\delta n /n_0$ to the ponderomotive  drive,   may be simplified to 
  \begin{align}
- \frac{ \delta n(k_y) }{n_0}  &=   \frac{ - I(k_y) }{ 4 v_g n_c T_e }  \alpha_ \mathrm{kin}    \, , \nonumber \\
- \alpha_ \mathrm{kin}    & = \frac{-\mathcal{Z}'( \xi_e) }{2}\frac{\mathcal{Z}'( \xi_i)   }{  \mathcal{Z}'( \xi_i) +\mathcal{Z}'( \xi_e)\frac{ T_i }{  ZT_e} } \, , \label{eq:drakef} 
+ \frac{ \delta n((k_\perp) }{n_0}  &=   \frac{ - I(k_y) }{ 4 v_g n_c T_e }  \alpha_ \mathrm{kin}    \, , \nonumber \\
+ \alpha_ \mathrm{kin}    & = \frac{-\mathcal{Z}'( \xi_e) }{2}\frac{\mathcal{Z}'( \xi_i)   }{  \mathcal{Z}'( \xi_i) +\mathcal{Z}'( \xi_e)\frac{ T_i }{  ZT_e} } \, ,\label{eq:drakef}
+ \\
+\xi_{e/i} &=  \frac{-\mathbf{k}_\perp\cdot\mathbf{v}_{e/i} }{\vert \mathbf{k}_\perp \vert } \sqrt{ \frac{ m_{e/i} }{ 2T_{e/i} }  }   \label{eq:xi} \, , 
 \end{align}
-with  $\alpha_ \mathrm{kin}    =1$  when $v_d=0$. 
+with $ v_{e/i}$ $ m_{e/i}$, $T_{e/i}$, $v_g$, $I$ are the electron/ion drift velocity, mass, temperature, laser group velocity and intensity respectively. In the following,  we will assume  $\mathbf{v}_e=\mathbf{v}_i=\mathbf{v}_d$ and that it is transverse the main laser propagation direction ($x$-axis). We also made use of $\mathcal{Z}'$, the first order derivative of the plasma dispersion function \cite{Fried_Gell-Mann_1960}.
 
-We may now evaluate the right-hand side of Eq. \eqref{eq:rose26} in real space, which, after an inverse Fourier transform and a derivation of Eq. \eqref{eq:drakef}, reads
+For a three dimensional system and 
+following Ref. \cite[]{Ruyer_2020}, 
+the right-hand side of Eq. \eqref{eq:rose26} may be written
 \begin{align}
- \left \langle\partial_y  \left( \frac{ \delta n }{n_0} \right)  \right  \rangle_y&=     \left \langle\int \frac{dk}{2\pi}   e^{ik y} i k  \frac{ -I(k) \alpha_ \mathrm{kin}  }{ 4 v_g n_c T_e }    \right  \rangle_y \, . \label{eq:1}
+ \left \langle  \frac{\nabla_\perp  \delta n }{n_0}   \right  \rangle_\perp&=     \left \langle\int \frac{d^2k_\perp}{(2\pi)^2}   e^{i\mathbf{k}_\perp\cdot\mathbf{r}_\perp} i\mathbf{k}_\perp  \frac{ -I(k) \alpha_ \mathrm{kin}  }{ 4 v_g n_c T_e }    \right  \rangle_\perp \, . \label{eq:1}
 \end{align}
-For a spatially Gaussian pulse defined as $I(y)=I_0g(y)$ with  $ g(y) = \exp(-2y^2/\sigma^2)$, we have $I(k_y)=I_0\sigma \sqrt{\pi/2}  \exp(-k_y^2\sigma^2/8)$ and  $\left \langle \exp(ik_y y) \right  \rangle_y= \exp(-k_y^2\sigma^2/8)$. We thus obtain
+For a spatially Gaussian pulse defined as $I(\mathbf{r}_\perp)=I_0g(\mathbf{r}_\perp)$ with  $ g(\mathbf{r}_\perp) = \exp(-2\mathbf{r}_\perp^2/\sigma^2)$, we have $I(\mathbf{k}_\perp)=I_0\sigma^2 (\pi/2)  \exp(-\mathbf{k}_\perp^2\sigma^2/8)$ and  $\left \langle \exp(i\mathbf{k}_\perp\cdot\mathbf{r}_\perp) \right  \rangle_\perp= \exp(-\mathbf{k}_\perp^2\sigma^2/8)$. We thus obtain
 \begin{align}
-  \left \langle\partial_y  \left( \frac{ \delta n }{n_0} \right)  \right  \rangle_y&=   
-  \frac{ -I_0  }{ 4 v_g n_c T_e } \frac{\sigma }{ 2 }\int \frac{dk}{\sqrt{2\pi}} e^{-k^2\sigma^2/4}   i k    \alpha_ \mathrm{kin}   \, . \label{eq:2}
+  \left \langle  \frac{\nabla_\perp  \delta n }{n_0}    \right  \rangle_y&=   
+  \frac{ -I_0  }{ 4 v_g n_c T_e } \frac{\sigma^2 }{ 4 }\int \frac{d^2k_\perp}{2\pi} e^{-\mathbf{k}_\perp^2\sigma^2/4}   i \mathbf{k}_\perp    \alpha_ \mathrm{kin}   \, . \label{eq:2}
  \end{align}
- For the following, it is essential to notice that  the real and imaginary part of  $\alpha_ \mathrm{kin}(k_yv_d/\vert k_y\vert)$ are even and odd functions of $k_y$ respectively.
- Hence,  using $\int dk_y\vert k_y\vert \exp(-k_y^2\sigma^2/4)=4/\sigma^2$, 
+ As the real and imaginary part of  $\alpha_ \mathrm{kin} $ are even and odd functions of $\mathbf{k}_\perp$ respectively, 
+ the above quadrature can be simplified in the polar coordinate  system, $(k_r,\theta)$, where  $\mathbf{k}_\perp\cdot\mathbf{v}_d/\vert \mathbf{k}_\perp \vert  = v_d\cos(\theta) $  [so that   $\alpha_ \mathrm{kin}$ solely depends on $\theta$, see Eqs. \eqref{eq:drakef}-\eqref{eq:xi}]. 
+ We therefore obtain 
  \begin{align} 
- \left \langle\partial_y  \left( \frac{ \delta n }{n_0} \right)  \right  \rangle_y&=   
-  \frac{ I_0  }{ 2 v_g n_c T_e } \sqrt{\frac{\pi}{2}}\frac{\alpha_{\mathrm{kin},i} }{ \sigma }   \, , \label{eq:3}\\
-\alpha_{\mathrm{kin},i} &= \Im\left[\alpha_\mathrm{kin}\left(\frac{k_yv_d}{\vert k_y\vert}\right)\right] \frac{k_y}{\vert k_y\vert} \, , \nonumber
+ \left \langle  \frac{ \nabla_\perp \delta n }{n_0}    \right  \rangle_\perp&= \frac{ \mathbf{v}_d }{ \vert \mathbf{v}_d \vert }
+  \frac{ I_0  }{ 4 v_g n_c T_e } \frac{1}{\sigma\sqrt{\pi}} \int_{0}^{\pi/2} d\theta \cos(\theta)\Im\left( \alpha_{\mathrm{kin}}  \right)\, , \label{eq:3}
 \end{align}
-where $\Im$ is the imaginary part of a complex and $\alpha_{\mathrm{kin},i} $, defined as above, is independent of $k_y$. 
+where $\Im$ is the imaginary part of a complex. 
 
-Combined with Eq. \eqref{eq:rose26}, we obtain the final beam bending rate
+By analogy with the two dimensional results of Ref. \cite[]{Ruyer_2020}, and after a projection on the drift velocity axis,  we may recast the final beam bending rate into
   \begin{align}
-\frac{1}{k_0} \frac{d \langle k_y\rangle_{k}    }{d x}& = - \frac{n_0 }{n_c}  \frac{  I_0 }{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}   \frac{\alpha_{\mathrm{kin},i} }{ \sigma}     
-  \, ,\label{eq:bbf}
+\frac{1}{k_0} \frac{d \langle \mathbf{k}_\perp \rangle_{k}    }{d x} \cdot& \frac{ \mathbf{v}_d }{ \vert \mathbf{v}_d \vert } = - \frac{n_0 }{n_c}  \frac{  I_0 }{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}   \frac{\beta_\mathrm{kin}^{(D)} }{ \sigma}     
+  \, ,\label{eq:bbf} \\
+  \beta_\mathrm{kin}^{(2)} &=  \Im\left[\alpha_\mathrm{kin}\left(\frac{k_yv_d}{\vert k_y\vert}\right)\right] \frac{k_y}{\vert k_y\vert}  \, ,\label{eq:beta2} \\
+  \beta_\mathrm{kin}^{(3)} &= \frac{1}{2^{3/2}}\int_{0}^{\pi/2} d\theta \cos(\theta)\Im\left[ \alpha_{\mathrm{kin}}\left( v_d \cos(\theta) \right)  \right]  \, ,\label{eq:beta3} 
 \end{align}
+where $D$ is the system dimension. 
 
-We will now derive, from Eqs. \eqref{eq:rose24} and \eqref{eq:bbf}, the displacement and deflection angle of a Gaussian beam in a homogeneous plasma.
-We will assume that the beam focal plane lies in $x=x_\mathrm{foc}$, the plasma extend from $\Delta x \equiv x-x_\mathrm{foc}=-L_x/2$ to $x=L_x/2$, is infinite in the $y$ direction and characterized by an ion/electron mass, density and temperature given by $m_{i/e}$, $Zn_i=n_e$ and $T_{i,e}$, respectively.
-Replacing $I_0$ by $ I_0/(1+\Delta x^2/z_c^2)$ and $\sigma$ by $ \sigma\sqrt{1+\Delta x^2/z_c^2}$  (where $z_c=\pi f^2\lambda_0$ is the Rayleigh length) in Eq. \eqref{eq:bbf}  to account for the slowly varying ($z_c\gg \sigma$) longitudinal intensity profile and integrating it from $x=-L_x/2$ to $L_x/2$, we obtain the following asymptotic deflection angle in the small angle limit ($\Delta \theta^{\infty} \ll 1$)
+We shall now deduce the deflection angle of a spatially Gaussian pulse (of Rayleigh length $z_c=\pi f^2\lambda_0$), focused at x=0 and propagating in an homogeneous plasma located in $-L_x/2<x<L_x/2$ and  in the asymptotic regime \cite[]{Ruyer_2020}, 
   \begin{align}
-\Delta \theta^{\infty} & =\frac{n_0 }{n_c}  \frac{  I_0   \alpha_{\mathrm{kin},i}}{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}      \frac{z_c}{\sigma} \frac{L_x}{z_c} \left[ 1+\left(\frac{L_x}{2z_c}\right)^2\right]^{-1/2}
+\Delta \theta^{\infty} & =\frac{n_0 }{n_c}  \frac{  I_0   \beta_\mathrm{kin}^{(D)}}{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}      \frac{z_c}{\sigma} \frac{L_x}{z_c} \left[ 1+\left(\frac{L_x}{2z_c}\right)^2\right]^{-1/2}
   \, .\label{eq:dth}
 \end{align}
-Likewise the centro\"id displacement at $x = L_x$ verifies
+Likewise, at $x = L_x/2$, the centro\"id displacement  verifies
  \begin{align}
-\Delta y^{\infty} & = \frac{n_0 }{n_c}  \frac{  I_0   \alpha_{\mathrm{kin},i}}{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}     \frac{L_x}{2z_c} \left[ 1+\left(\frac{L_x}{2z_c}\right)^2\right]^{-1/2} L_x
+\Delta y^{\infty} & = \frac{n_0 }{n_c}  \frac{  I_0   \beta_\mathrm{kin}^{(D)}}{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}     \frac{L_x}{2z_c} \left[ 1+\left(\frac{L_x}{2z_c}\right)^2\right]^{-1/2} L_x
   \, .\label{eq:dy}
 \end{align}
 
 Hence, the average wave vector deflection for a speckle modeled by a Gaussian pulse of length $L_x=2z_c $ reads: 
  \begin{align}
-\Delta \theta^{\infty}(L_x=2z_c) & = \frac{n_0 }{n_c}  \frac{  I_0   \alpha_{\mathrm{kin},i}}{ 2 v_g n_c T_e } \sqrt{\frac{1}{\pi}}      \frac{z_c}{\sigma}   
+\Delta \theta^{\infty}(L_x=2z_c) & = \frac{n_0 }{n_c}  \frac{  I_0   \beta_\mathrm{kin}^{(D)}}{ 2 v_g n_c T_e } \sqrt{\frac{1}{\pi}}      \frac{z_c}{\sigma}   
   \, .\label{eq:dthf}
 \end{align}
 
-\subsection{Comparison with PIC simulations}
-In order to validate our results, we performed Smilei \cite[]{Smilei} PIC simulations  of a Gaussian laser pulse crossing a fully ionized carbon plasma drifting along the direction transverse to the laser propagation axis. 
-Subsequently, all PIC quantities are given for a $\lambda_0=1\,\rm\mu m$ laser wavelength.
-The 2D simulation size is $L_x \times L_y = 128 \times 128\, \rm \mu$m$^2$ with fully periodic boundary  conditions in the $y$ direction, and absorbant (Silver-M\"uller) for the field and for the particles in the $x$ direction.
-A Gaussian laser pulse propagating in the $+x$ direction was injected from the left boundary with the spatial profile at best focus $E_0\exp(-y^2/\sigma^2)$ with $\sigma=f\lambda_0$, focused in the center of the simulation domain with a focal number $f = 5$ and flat temporal envelope preceded by a 1 ps linear rise. 
-A fourth order interpolation scheme is used with 36 particles per mesh per species, 20 points per laser wavelength and 14 points per laser temporal period. The plasma density is constant everywhere except on 14 microns close to both $\pm x$ boundaries so that the effective plasma length is 100 microns.
+The beam bending transient regime, as derived in 
+ Ref. \cite[]{ Ruyer_2020}, \emph{i.e.} based on a fluid plasma response, does not depend on the dimension of the system. Hence, the temporal evolution of the deflection angle and centro\"id displacement reads $\Delta \theta(t)  =f(t)\Delta \theta^{\infty} $ and $\Delta y(t)  =f(t)\Delta y^{\infty} $ where $f(t)$ tends towards unity in few Landau damping times. 
+ 
 
-In order to isolate the beam bending as much as possible in our simulations, choice has been made to use $T_i=ZT_e$ for reducing the stimulated Brillouin backward scattering. The electron density is fixed to $n_e =0.1n_c $ with a $y$-aligned drift velocity, $v_y=v_d$, for both the electron and ion populations.
-To validate the beam bending rate in a regime where PIC simulations are not numerically too constraining, we selected two sets of plasma parameters $(T_e, T_i )= (500\, $eV$, 3\, $keV$)$ and $(T_e, T_i )= (5\, $keV$, 30 \,$keV$)$. Finally, the maximum laser intensity used are either $I_0 = 10^{16} \,\rm W.cm^2$ or $I_0 = 3 \times10^{15} \,\rm W.cm^2$ for the case  $T_e=5\, \rm keV$  and $I_0 = 10^{15} \,\rm W.cm^2$ $I_0 = 3 \times10^{14} \,\rm W.cm^2$ for the case $T_e=500\, \rm eV$, thus corresponding to $\delta n_0/n_0=0.031$ or $0.1$, respectively.
+\subsection{Kinetically  corrected ponderomotive potential for the fluid framework } \label{sec:transient}
 
-\begin{figure}
-\begin{tabular}{c}
-\includegraphics[scale=0.49]{Figure/Ixy_1e15_M1p2_C6+.png} \\
-\includegraphics[scale=0.49]{Figure/Iyt_1e15_M1p2_C6+.png}
-\end{tabular}
-\caption{ \label{fig:pic} Smilei 2D PIC simulation of Gaussian beam bending for $I_0 = 1\times 10^{15} \,\rm W.cm^2$, $T_e=500$ eV, $T_i=3$ keV, and $ v_d=0.9c_s$.
-Laser intensity profile at $t = 30$ ps (a) and intensity lineout at the exit plane of the simulations,  $x = 128 \,\rm\mu m$, as  a function of time (b). The location of the  intensity maximum is illustrated on panel (b) by a thin white line.
-}
-\end{figure}
-Figure \ref{fig:pic}(a) illustrates the intensity profile of a Gaussian laser pulse propagating through a homogeneous plasma drifting toward the $+y$ direction with a  Mach number, $M_0=v_d/c_s=0.9$. A density hole is formed by the ponderomotive force and reaches its asymptotic depth in a time scaling as  $\sim \sigma /c_s \simeq  22$ ps. As the plasma is drifting, the density perturbation is advected upward by the flow leading to  the laser deflection.
-As evidenced by Fig. \ref{fig:pic}(b), this process develops during the first $\sim 30$ ps  of the simulation showing a linear displacement of the intensity maximum (white solid line) between  $\sim 10$ and $\sim 25$ ps. Then, the system reaches an asymptotic limit at $\langle y \rangle_y\simeq 6\, \rm \mu m$ after propagation through $100 \, \rm \mu m$ of plasma. The prediction of Eq. \eqref{eq:dy} gives a shift of $\langle y \rangle_y\simeq  5.8 \, \rm \mu m$, in good accordance with our numerical results. More generally, a parametric study with particle-in-cell simulations has been carried and compared to our theoretical predictions in Figs. \ref{fig:comthpic}(a,b).
-
-The case $\delta n_0/n_0=0.031$  [see Fig. \ref{fig:comthpic}(a)] corresponds to $(T_e, I_0)=(500\, \rm{eV}, 3\times 10^{14}\, \rm{W.cm^2})$ and $(5\, \rm{keV}, 10^{15}\, \rm{W.cm^2})$ and demonstrates a very good agreement, validating the kinetic treatment for $M_0 < 1.2$. Interestingly the fluid-based theory [Eq. (116) of Ref. \cite{POP_Rose_97}, dashed line] shows a more peaked dependence of the laser centro\"id displacement around Mach number of $M_0=1$ than our kinetic model (plain line). 
-Indeed, accounting properly for the damping rate of driven acoustic waves is essential to quantitatively predict the bending rate of a laser pulse. 
-\begin{figure}
-\begin{tabular}{c}
-\includegraphics[scale=0.49]{th_PIC_dnsn1s8a.eps} \\
-\includegraphics[scale=0.49]{th_PIC_dnsn0p2b.eps}
-\end{tabular}
-\caption{ \label{fig:comthpic}  
-Comparison between the theoretical predictions of the laser centro\"id displacement $\langle y \rangle_y$ from Eq. \eqref{eq:dy} with $n_e/n_c=0.1$, $L_x=100 \,\mu m$ and $\delta n_0/n_0=0.0625$ (a) and $\delta n_0/n_0=0.2$ (b) as black solid line. Numerical results (see text) obtained with $T_e=500$ eV (circles) and $T_e=5$ keV  (triangles) are superimposed. The fluid theory obtained from the numerical integration of Eqs. \eqref{eq:dthetarose26}-\eqref{eq:frose26} \cite{POP_Rose_96} is illustrated by the black dashed lines.
-}
-\end{figure}
-
-For sake of completeness, a larger value of $\delta n_0/n_0=0.2$, marginally in the small density perturbations limit ($\delta n_0/n_0 \ll 1$) of Eq.  \eqref{eq:drakef} has also been addressed in Fig. \ref{fig:comthpic}(b).
-In this case, the estimation of our  numerical results (as circles and triangles) that are underestimated  by our linear theoretical predictions (solid line), requires a nonlinear correction, as the one suggested by  Ref.
-\cite[]{PRL_Casanova_85,PFB_Rozmus_1992}.
-
-Although no Brillouin back scattering are observed in our simulations, backward (BSRS) and forward (FSRS) stimulated Raman scattering modes are captured for the cases $T_e=500$ eV ($T_e=5$ keV respectively). 
-In our simulations, FSRS is observed at the beginning only, vanishing as soon as the pump wave starts to be deflected off its original course, after a few picoseconds. As seen in the resulting intensity profiles, the superposition of the pump and diffused waves results in an increase of the opening angle of the laser beam that rapidly  disappear.
-Regarding FSRS for the case $T_e=500$ eV, a backscattering of less than \textcolor{red}{ 5\%} is observed in our simulations, hence, we may neglect the pump depletion that can affect the ponderomotive density fluctuations [see Eq. \eqref{eq:drake}] and thus the beam bending predictions.
-\textcolor{red}{ 
-The saturations of Raman scattering is known to produce a low density hot electron population of energy given by $\sim m_e v_\phi^2 $ with $v_\phi =$ resulting to a hot electron temperature 
-$T_{eh}\sim 40$ keV and $\sim 200$ keV } in fair accordance with the PIC simulations results.  The hot electron density in our simulations verifies 
-\textcolor{red}{ $n_{eh}\sim [0.001-0.01]n_e$  } and remain dilute throughout our simulations. 
-
-It is interesting to look at the influence of such a population on the beam bending rates. For the superpostion of the two Maxwellian electron populations ($e$ and $eh$-subscript) the kinetic factor of Eq. \eqref{eq:drakef} becomes 
-\begin{align}
- \alpha_ \mathrm{kin}    =\frac{1}{2} \frac{-\mathcal{Z}'( \xi_i) [\mathcal{Z}'( \xi_e)  +\frac{n_{eh}T_e}{n_eT_{eh}}\mathcal{Z}'( \xi_{eh})] }{  \mathcal{Z}'( \xi_i) +[\mathcal{Z}'( \xi_e)  +\frac{n_{eh}T_e}{n_eT_{eh}}\mathcal{Z}'( \xi_{eh})]\frac{ T_i }{  ZT_e} } \, . \label{eq:drakefeh} 
-\end{align}
-For all our simulation $n_{eh}T_e/ (n_eT_{eh}) \ll 1$ which seems to indicate that the Raman hot electron population may not affect the beam bending physics of interest here. 
-
-\subsection{Corrected ponderomotive potential and transient regime} \label{sec:transient}
-\begin{figure}
-\begin{tabular}{c}
-\includegraphics[scale=0.49]{fig3a.png} \\
-\includegraphics[scale=0.49]{fig3b.png} \\
-\includegraphics[scale=0.49]{th_PIC_t0.eps}
-\end{tabular}
-\caption{ \label{fig:transient}  
-(a) Intensity lineout at the exit plane of the simulation,  $x = 128 \,\rm\mu m$, as  a function of time for the case $I_0 = 3\times 10^{14} \,\rm W.cm^2$, $T_e=500$ eV, $T_i=3$ keV, and $ v_d=0.9c_s$. The maximum of the intensity is illustrated by a thin red line while the  theoretical predictions of Eq. \eqref{eq:tr} is represented by the thick red line.
-(b) Comparison between $t_0$ from Eq. \eqref{eq:t0} and the time for which the intensity maximum displacement extracted from the simulation fulfills $\delta y = (1-\exp(-1))\delta y ^{\infty}$, \emph{i.e.} reaches   63\% of its asymptotic value.  The numerical results corresponds $\delta n/n=0.0625$  with   $T_e=500$ eV (red circles) and $T_e=5$ keV  (blue triangles).}
-\end{figure}
-Regarding the transient regime, the proper analytical modeling requires to account for the evolution of the  kinetic Landau damping of a growing driven acoustic wave; this formidable task, as done in Ref. \cite[]{POP_Benisti_2015}  for   electron waves, is out of the scope of this manuscript. 
-
-Following Ref. \cite[]{POP_Debayle_2018}, we will use the fluid framework to model analytically  the beam-bending transient regime. In order to make sure that the ponderomotive force applied to the hydrodynamic equations leads to the correct asymptotic regime, the kinetic density fluctuations of Eq. \eqref{eq:drakef}  will be identify to the solution of Eq. \eqref{eq:hydro3b}, which, for a Landau ion acoustic wave damping rate that verifies $\nu=\gamma_0c_s \vert k_y\vert$, reads 
+We propose to introduce in this section a simple correction to the ponderomotive force to be implemented for capturing accurately the kinetic beam bending physics, in an hydrodynamic-based code. 
+In order to make sure that the ponderomotive force applied to the hydrodynamic equations leads to the correct asymptotic regime, the kinetic density fluctuations of Eq. \eqref{eq:drakef}  will be identify to their fluid counterpart, which, for a Landau ion acoustic   damping rate that verifies $\nu=\gamma_0c_s \vert k_y\vert$, reads 
 \begin{equation}
-\left(\frac{\delta n}{n}\right)_\mathrm{hydro} =\frac{-\Phi}{1-M_0^2 -2i M_0 \frac{nu}{k_y c_s}} \, .
+\left(\frac{\delta n}{n}\right)_\mathrm{hydro} =\frac{-\Phi}{1-M_0^2 -2i M_0 \frac{\nu}{k_y c_s}} \, .
 \end{equation} 
-we thus deduce 
+We thus deduce 
 \begin{equation}
-\left(\frac{\delta n}{n}\right)_\mathrm{Kin} =\left(1-M_0^2 -2iM_0\frac{\nu}{k_y c_s} \right)  \alpha_\mathrm{kin}
+\left(\frac{\delta n}{n}\right)_\mathrm{Kin} =\left(1-M_0^2 -2iM_0\frac{\nu}{k_y c_s} \right) \beta_\mathrm{kin}^{(D)} 
 %\left(\frac{k_y v_d}{\vert k \vert }\right)
 \left(\frac{\delta n}{n}\right)_\mathrm{hydro}\, .
 \end{equation} 
-For $M_0 =0$, $\alpha_\mathrm{kin}=1$, so that $(\delta n/n)_\mathrm{Kin} = (\delta n/n)_\mathrm{hydro}$.
 The corrected hydrodynamical equation in its linearized form becomes 
 \begin{align}
- \{ (c_s^2-v_d^2)\partial_y^2 -\partial_t \partial_t\}    \frac{  \delta n }{n_0} - 2 v_d \partial_y  \partial_t \frac{  \delta n }{n_0}   \nonumber \\
--2\nu  (\partial_t + v_d  \cdot \partial_y) \frac{  \delta n }{n_0}   = - c_s^2\partial_y^2 \hat{\Phi} \, , \label{eq:hydrof2} \\
- \hat{\Phi}_k  =\left(1-M_0^2 -2iM_0\frac{\nu}{k_y c_s}\right)    \alpha_\mathrm{kin}\left(\frac{k_y v_d}{\vert k_y \vert }\right)\Phi_k  \, .\label{eq:hydrof3} 
+ \{ (c_s^2-v_d^2)\nabla_\perp^2 -\partial_t \partial_t\}    \frac{  \delta n }{n_0} - 2 v_d \nabla_\perp  \partial_t \frac{  \delta n }{n_0}   \nonumber \\
+-2\nu  (\partial_t + v_d  \cdot\nabla_\perp) \frac{  \delta n }{n_0}   = - c_s^2\nabla_\perp^2 \hat{\Phi} \, , \label{eq:hydrof2} \\
+ \hat{\Phi}_k  =\left(1-M_0^2 -2iM_0\frac{\nu}{k_y c_s}\right)    \beta_\mathrm{kin}^{(D)} \Phi_k  \, .\label{eq:hydrof3} 
 \end{align}
 The value of $\hat{\Phi}$ is related to ponderomotive potential, $\hat{\Phi}$, through a complex scalar that introduces a phase shift between the density minimum and the intensity maximum. The right hand side of Eq. \eqref{eq:hydrof2} has been implemented in the hydrodynamic  code HERA  by computing Eq. \eqref{eq:hydrof3} after a Fourier transform in the direction transverse to the main laser axis. Before applying the inverse Fourier transform back to the real space, one can also include the thermal corrections of Ref. \cite[]{Bychenkov_2000} although not used in this study.
 \textcolor{red}{Finally, as will be shown subsequently, the value of $\nu$  is critical for describing  the transient regime. Hence, Landau damping has been implemented in HERA, as described in Ref. \cite[]{harmony}.}
-
-In order to  model the transient regime of beam bending and solve Eqs. \eqref{eq:hydrof2}-\eqref{eq:hydrof3}, we could use the analytical  solution of Ref. \cite[]{POP_Huller_2020} where the full spatiotemporal linear response of  a flowing plasma to a ponderomotive pressure is derived in the hydrodynamic framework. However, the parameters of interest here ($ZT_e/T_i\sim 1$) are out of reach of these equations that were derived assuming $\nu\sigma/c_s\ll 1$. Indeed, evaluating $\left \langle\partial_y  \left( \delta n  \right)  \right  \rangle_y  $ with Eq. (16) of Ref. \cite[]{POP_Huller_2020}  gives,  for our parameters ($ZT_e/T_i\sim 1$),  a temporal evolution that unphysically overshoot its asymptotic limit by a factor $\gtrsim 2$ [see Fig. \ref{fig:transient}(a)]. 
-
-Instead, we note that Eqs \eqref{eq:hydrof2}-\eqref{eq:hydrof3}, after a transverse spatial Fourier transform and  written in the plasma rest frame (for $M_0=v_d=0$),  coincide with Eq.  (10)  of  Ref. \cite[]{POP_Debayle_2018} that has been solved exactly [Eq. (12)]. 
-Unlike in Ref. \cite[]{POP_Debayle_2018} where  the free wave characteristics,  $\omega$, $k_y$ and $\nu$ are unambiguous, the ponderomotive force drives in our case, density fluctuations with a significant spectral width [$\sim  g(k_y)= \exp(-k_y^2\sigma^2 /8)$]. 
-We will estimate the relevant free wave damping rate, $\nu=\gamma_0 c_s \vert k_y \vert$ by using the averaged of Eq. \eqref{eq:kmoy},
-\begin{align}
- \langle \vert k_y\vert  \rangle_{k_y}\equiv \frac{\int dk\vert k\vert  e^{-k^2\sigma^2 /8} }{\int dk e^{-k^2\sigma^2 /8}} & = \frac{2}{\sigma \sqrt{\pi}}\, , \\
- \langle \nu \rangle_{k_y} & = \frac{2\gamma_0 c_s}{\sigma \sqrt{\pi}}\, , \\
-\omega  & = \frac{2c_s}{\sigma \sqrt{\pi}}\, .
-\end{align}
-
-Hence, the temporal evolution of the displacement and deflection angle can be related to their asymptotic values through
-\begin{align}
-    \Delta y (t) = f(t)\Delta y^\infty \, , \label{eq:dyt} \\
-    \Delta \theta (t) = f(t)\Delta \theta^\infty \, , \label{eq:dtht}
-\end{align}
-with, for a laser intensity independent of time and $\omega^2 > \langle \nu \rangle_{k_y} ^2$,
-\begin{align}
- f(t)  &= 1 -e^{- \langle \nu \rangle_{k_y}  t}[\cos(at)+ \langle \nu \rangle_{k_y}  \sin(at)] \cos(\omega t)\nonumber \\
- &-\frac{\omega}{a} e^{- \langle \nu \rangle_{k_y}  t}  \sin(at) \sin(\omega t)\, ,\label{eq:ft}\\
- a &= \sqrt{\omega^2 - \langle \nu \rangle_{k_y}^2} \label{eq:fta}\, .
-\end{align}
-Hence, the bending angle of a pulse reaches its asymptotic limit in a  few a free acoustic Landau damping times.
-The temporal evolution of the pulse intensity profile is illustrated in Figs. \ref{fig:transient}(a,b) for the case $\delta n/n=0.031$, $T_e=500$ eV and $T_e=5$ keV. 
-The location of  the intensity maximum  as a thin red line presents a slow rise  until \textcolor{red}{$20$ ps  (a) [$7$ ps  (b)]
-before reaching the asymptotic limit of $ \sim1.8 \,\rm \mu m$ (a) [$ \sim1.2 \,\rm \mu m$  ps  (b)] and agrees correctly with the analytical predictions of Eq. \eqref{eq:dyt}-\eqref{eq:fta}. 
-}
-The time, $t_0$, for which the intensity  displacement reaches $f(t=t_0)=1-\exp(-1)\simeq 63\%$ of its asymptotic value can be extracted from the theory and the simulations and compared. Figure \ref{fig:transient}(c) presents a fair agreement between the theoretical values  of  $t_0$ [obtained by solving numerically $f(t)=e^{-1}$, Eq. \eqref{eq:ft}] and the one extracted from the PIC simulations. Thus, the beam bending transient regime may be modeled through Eqs. \eqref{eq:dyt} and \eqref{eq:dtht}, for $M_0<1.5$. 
 
 \section{Modified ray tracing scheme}
 So as to model the propagation of a RPP-beam in a flowing plasma, we propose here the reconstruction of the laser intensity pattern near the focal plane in an hydrodynamic code using a Monte-Carlo scheme to account for the influence of the local intensity maximum, \emph{i.e.} the speckles, on the beam bending physics.
@@ -320,13 +197,13 @@ Note that the ratio $k_y/k_0$ can be seen as the angle of propagation of the bea
 %
 %Likewise, .... 
 
-Let introduce the spatial, $\hat{g}(y)$, and temporal, $h(t)$, envelopes at best focus. Within the para-axial approximation, the boundary condition at $x=x_\mathrm{BC}$ can be found by multiplying Eq. \eqref{eq:efoc} by $h(t)*\hat{g}(y)$  and  apply the well-known Fresnel integral:
+Let introduce the spatial, $\hat{g}(\mathbf{r}_\perp)$, and temporal, $h(t)$, envelopes at best focus. Within the para-axial approximation, the boundary condition at $x=x_\mathrm{BC}$ can be found by multiplying Eq. \eqref{eq:efoc} by $h(t)*\hat{g}(\mathbf{r}_\perp)$  and  apply the well-known Fresnel integral:
 \begin{align}
-    E(x_\mathrm{BC},y,t) =&h(t)e^{i\omega t}\times  \nonumber \\
-    &\mathrm{FT}^{-1}_y \left\{ e^{i \frac{k^2 (x_\mathrm{foc}-x_\mathrm{BC}) }{2k_0}} 
-   \mathrm{FT}_k \left[ \hat{g}(y)E_\mathrm{RPP} \right]  \right\}  \, , \label{eq:ebc}
+    E(x_\mathrm{BC},\mathbf{r}_\perp,t) =&h(t)e^{i\omega t}\times  \nonumber \\
+    &\mathrm{FT}^{-1}_{\mathbf{r}_\perp} \left\{ e^{i \frac{k^2 (x_\mathrm{foc}-x_\mathrm{BC}) }{2k_0}} 
+   \mathrm{FT}_k \left[ \hat{g}(\mathbf{r}_\perp)E_\mathrm{RPP} \right]  \right\}  \, , \label{eq:ebc}
 \end{align}
-where $FT_k$ and $FT^{-1}_y$ are the direct and inverse Fourier transform. 
+where $FT_k$ and $FT^{-1}_{\mathbf{r}_\perp}$ are the direct and inverse Fourier transform. 
 
 \subsection{Intensity profile in vacuum and beam-bending model}
 For sake of completeness, the main speckle spatial properties in vacuum are recalled in the following, according to the analytical derivations of Ref. \cite{Garnier_1999}. 
