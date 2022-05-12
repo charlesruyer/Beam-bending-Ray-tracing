@@ -21,6 +21,7 @@
 ]{revtex4-1}
 
 \usepackage{graphicx}   % for figures
+\usepackage{sidecap}
 \usepackage{epstopdf}
 %\usepackage{epsfig}
 %draft
@@ -33,334 +34,584 @@
 %\usepackage{floatrow}
 \usepackage{color}
 %\usepackage{thumbpdf}
+\usepackage{soul}
+\usepackage{ulem}
+%\usepackage[ backend=biber,    style=numeric-comp,maxcitenames=10, maxbibnames=10, backref=true]{biblatex}
+%\usepackage[ maxcitenames=1, maxbibnames=10]{biblatex}
 
+%\definecolor{pascal}{rgb}{0.19, 0.55, 0.91}
+%\newcommand{\pas}{\color{pascal}}
+%\definecolor{peml}{rgb}{0.1, 0.2, 0.9}
+%\newcommand{\pas}{\color{peml}}
+
+%\def\tc{\textcolor{red}}\makeatletter
+\def\@email#1#2{%
+ \endgroup
+ \patchcmd{\titleblock@produce}
+  {\frontmatter@RRAPformat}
+  {\frontmatter@RRAPformat{\produce@RRAP{*#1\href{mailto:#2}{#2}}}\frontmatter@RRAPformat}
+  {}{}
+}%
+\makeatother
 \begin{document}
 
-\title{Accounting for  beam-bending in classical ray tracing schemes for propagating realistic pulses in indirect drive ignition conditions}
+\title{Accounting for speckle scale  beam-bending in classical ray tracing schemes for propagating realistic pulses in indirect drive ignition conditions}
 \author{C. Ruyer}\email{charles.ruyer@cea.fr}
 \affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
 \affiliation{Universit\'e Paris-Saclay, CEA, LMCE, 91680 Bruy\`eres-le-Ch\^atel, France}
-\author{A. Debayle}
+\author{P. Loiseau}
+\affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
+\affiliation{Universit\'e Paris-Saclay, CEA, LMCE, 91680 Bruy\`eres-le-Ch\^atel, France}
+\author{G. Riazuelo}
 \affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
 \affiliation{Universit\'e Paris-Saclay, CEA, LMCE, 91680 Bruy\`eres-le-Ch\^atel, France}
 \author{R. Riquier}
 \affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
-\author{P. Loiseau}
+\author{A. Debayle}
 \affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
 \affiliation{Universit\'e Paris-Saclay, CEA, LMCE, 91680 Bruy\`eres-le-Ch\^atel, France}
 \author{P. E. Masson-Laborde}
 \affiliation{CEA, DAM, DIF, F-91297 Arpajon, France}
 \affiliation{Universit\'e Paris-Saclay, CEA, LMCE, 91680 Bruy\`eres-le-Ch\^atel, France}
 \begin{abstract}
-We propose a simple analytical modeling of the beam bending deviation of a spatially and temporally incoherent laser pulse in light of  hydrodynamic paraxial simulations and of interest for most high energy laser facilities.
-A modified ray tracing scheme is then introduced and validated for accounting efficiently  for the centroid deviation in realistic conditions.
-When applied to the propagation of the  inner cone in a full-scale simulation of a NIF experiment, a significant impact of the beam bending physics in two dimensions on the path of the laser is predicted, able to affect the refraction conditions on the gold hohlraume and possibly the capsule implosion symmetry.
+We propose a semi-analytical modeling of smoothed laser beams deviation induced by  plasma flows. Based on a Gaussian description of speckles, the model includes spatial, temporal and polarization smoothing techniques, through fits issued from  hydrodynamic simulations with a paraxial description of electromagnetic waves.
+This beam bending model is then included in a ray tracing algorithm, and carefully validated.
+When applied as a post-process to the propagation of the  inner cone in a full-scale simulation of a NIF experiment, the beam bending along the path of the laser affects the refraction conditions inside the hohlraum and the energy deposition, and could explain the anomalous refraction measurements, the so-called glint observed in some NIF experiments.
 \end{abstract}
 
 \maketitle
 
 \section{Introduction}
-Many experiments conducted in multi-kilojoule laser facilities, whether the concern astrophysical phenomenon, high-energy-density physics \cite{Drake2006} or inertial confinement fusion \cite{Lindl_2004,He_2007,Cavailler_2005}, 
+Many experiments conducted in multi-kilojoule laser facilities, whether they concern astrophysical phenomena, high-energy-density physics \cite{Drake2006} or inertial confinement fusion \cite{Lindl_2004,Cavailler_2005,MRE_Zheng_2017},
 bring critical insights into  matter under extreme  conditions. 
-In these facilities, the drive is used to heat  and compress the matter to millions of degrees and  Mega to Gigabar pressure. 
-The predictability of these experiments  requires the precise understanding of the laser plasma interaction such as 
-the mechanisms responsible of the energy deposition,  or   the growth of various instabilities such as stimulated Raman or Brillouin scattering  \cite{Shen_1965,Forslund_1973,POP_Liu_2009,hao_2013}, cross-beam energy transfer \cite{hao_2016}, two-plasmon decay  \cite{Dubois_1995,Russell_2001} or self-focusing  \cite{Wagner_1968}.
+In these facilities, energetic laser beams are used to heat  and compress the matter to millions of degrees and  Mega to Gigabar pressure. 
+The predictability of these experiments requires a precise understanding of the laser plasma interaction such as 
+the mechanisms responsible for the energy deposition, or the growth of various instabilities such as stimulated Raman or Brillouin scatterings  \cite{Shen_1965,Forslund_1973,POP_Liu_2009,hao_2013}, cross-beam energy transfer \cite{hao_2016}, two-plasmon decay  \cite{Dubois_1995,Russell_2001}, collective scattering \cite[]{Dubois_1992,POP_Xiao_2019,MRE_Qiu_2021}, or self-focusing  \cite{Wagner_1968}.
 
-Furthermore, optical smoothing techniques as Random-Phase-Plates (RPP) or  spectral dispersion (SSD), often used in LMJ or NIF-class facilities, allow to reach a better control on the laser intensity profile \cite{Kato_1984,Skupski_1989}.
-These techniques  degrade the spatial (RPP) and temporal coherence (SSD) of the  light,  resulting in intensity fluctuations on the scale of a few wavelength lasting a few picoseconds: the so-called speckles. 
-They will in turn affect the plasma dynamics on macroscopic scales by affecting the energy deposition region  \cite[]{POP_Delamater_1996,Huser_2009}, the scattering direction  of the light wave \cite{Epstein_1986,PRL_Moody_96,POP_Debayle_2018,POP_Duluc_2019,Yin_2019,POP_Huller_2020} or the amount of expected reflectivity \cite[]{POP_Laffite_2010,PRL_Rousseaux_2016,POP_Masson_2016,Glize_2017,Winjum_2019}. Accounting for the hot-spot dynamics thus requires to capture the interplay between the micron or  sub-micron physics driving the   diffraction pattern of the RPP/SSD beam, with the millimeters and nanoseconds typical duration and size of the experiments. 
-In this context, an hydrodynamical description of the plasma can be coupled with Maxwell equations \cite{Berger_1995,Still_2006,Loiseau_2006, Huller_2006}, however this formalism which fails to capture self-consistently Landau damping of acoustic waves may appear to be  too heavy numerically whenever  multi-dimensional effects,  solid-density physics or radiative phenomenons arise.
+Furthermore, optical smoothing techniques combining  Random-Phase-Plates (RPP) and  smoothing by spectral dispersion (SSD), available on the Laser M\'ega Joule (LMJ), the National Ignition Facility (NIF) or SG-III-class lasers, improve the laser intensity profile \cite{Kato_1984,Skupski_1989}.
+These techniques reduce  the spatial (through RPP) and temporal coherence (through SSD) of the  light,  resulting in intensity fluctuations on the scale of a few wavelengths lasting a few picoseconds: the so-called speckles. polarization smoothing (PS), which consists in splitting the pulse in two uncorrelated superimposed beams with perpendicular polarizations, may also be used. 
+Together, these smoothing techniques will in turn affect the laser-plasma interactions on macroscopic scales such as the energy deposition region  \cite[]{POP_Delamater_1996,Huser_2009}, the scattering direction  of the light wave \cite{Epstein_1986,PRL_Moody_96,POP_Debayle_2018,POP_Duluc_2019,Yin_2019,POP_Huller_2020} or the amount of expected reflectivity \cite[]{POP_Laffite_2010,POP_Masson_2016,Glize_2017,Winjum_2019}. Accounting for the hot-spot dynamics thus requires to conciliate the sub-micron and sub-picosecond physics of the RPP/SSD beam with the millimeters size and nanoseconds duration of the experiments. 
+In this context, a hydrodynamic description of the plasma can be coupled with an approximated Maxwell solver  \cite{Berger_1995,Still_2006,Loiseau_2006, Huller_2006}. However this formalism fails to capture self-consistently the acoustic waves Landau damping or other kinetic effects and may appear to be numerically unsuitable whenever  multi-dimensional effects,  solid-density physics or radiative phenomenons arise.
 
-In such systems, we usually resort to a rough description of light \cite[]{POP_Zhang_2014,Lefebvre_2018},  such as the classical ray tracing scheme which, in its native form, only captures the wave refraction and basic energy deposition.
-The proper description, by the ray tracing scheme,  of simple  light quantities  such as the intensity  of the wave or its local spectrum, is still an active area of research  \cite{Egorchenkov_2001, Colaitis_2014, Strozzi_2017}.
+In such systems, hydrodynamic codes rest on a rough description of light,  such as the classical ray tracing scheme \cite[]{Hydra,Lared-H,POP_Zhang_2014,Lefebvre_2018} which, in its native form, only captures the wave refraction and basic energy deposition.
+The accurate description, by the ray tracing scheme,  of simple  light quantities  such as the intensity  of the wave or its local spectrum, is still an active area of research  \cite{Egorchenkov_2001, Colaitis_2014, Strozzi_2017,POP_Colaitis_2019}.
 Although a large effort is made in improving these schemes by including back or side scattering of the light caused by wave mixing processes \cite[]{Strozzi_2017,POP_Debayle_2019},  
-modeling the impact of plasma smoothing effects on the pulse propagation properties remains vastly unexplored \cite[]{POF_Anderson,POP_Still_2000,POP_Grech_2006,PRL_Grech_2009}.
+modeling the speckle scale physics  remains vastly unexplored \cite[]{PRL_Hinkel_1996,POP_Grech_2006,PRL_Grech_2009,PRL_Rousseaux_2016}.
  
-Notably, this study  addresses the beam bending  of  a laser pulse \cite{PRL_Hinkel_1996,POP_Hinkel_1998,POP_Bezzerides_1998,POP_Rose_96,PRL_Montgomery} .
-It occurs when the laser driven density fluctuations are advected by a flow, resulting,  due to a wave-guide effect, to the deflection of the electromagnetic wave off its original propagating axe. 
-As this effect may take place in a perfectly homogeneous plasma, the beam deflection may adds up to the well-known refraction of light caused by density gradients. 
-We will first briefly recall  the two and three dimensions modeling of Ref \cite[]{POP_Ruyer_2020}, which predict the deflection angle, in both the asymptotic and transient regime of a Gaussian laser pulse.
-The model will then be extended to the centroid deviation of a spatially (using random phase plates) and temporally (with spectral dispersion) incoherent laser pulse in light of HERA paraxial simulations \cite{Loiseau_2006}.  
-%n fluid-based codes such as HERA or PF3D  \cite{Berger_1995,Still_2006,Loiseau_2006, Huller_2006}. 
-Our model  will then be included into 
-a  ray-tracing description of the beam propagation, compared successfully to  hydrodynamic paraxial simulations. This will allow us to address the laser propagation in realistic indirect drive ICF plasma conditions, \emph{i.e.} inside an hohlraume and evidence a sensible impact of the beam bending on the light energy path. 
+
+This study  addresses the beam bending  of  a laser beam \cite{POP_Hinkel_1998,POP_Bezzerides_1998,POP_Rose_96,PRL_Montgomery}.
+It occurs when the laser driven density fluctuations are advected by a flow, resulting,  due to a wave-guide effect, to the deflection of the electromagnetic wave off its original propagating axis, toward the flow direction. 
+As this effect may take place in a perfectly homogeneous plasma, the beam deflection may add up to the well-known refraction of light caused by density gradients. 
+In section II, we will first briefly recall the kinetic and fluid  modeling of Ref \cite[]{POP_Ruyer_2020}, which predicts the deflection angle of a Gaussian laser pulse, in both the transient and asymptotic regimes of the plasma density response.
+The model is then extended, in section III, to the centroid deviation of a spatially (using RPP) and temporally (with SSD) incoherent laser pulse with the effect of polarization smoothing by fits issued from two-dimensional (2D) Hera \cite{HERA_Jourdren_2005,Loiseau_2006} and three-dimensional (3D) Parax \cite[]{POP_Riazuelo_2000} simulations.  
+Our model  is included into 
+a  ray tracing description of the beam propagation and compared successfully to  our numerical results, in section IV. 
+%
+In section V, the laser propagation in realistic indirect drive ICF plasma conditions (NIF shot N181209 from the hybrid B campaign \cite[]{POP_Hurricane_2019,POP_Kritcher_2020,POP_Zylstra_2020,POP_Hohenberger_2020}), is addressed and evidences a sensible impact of the flow-induced deviation on the light energy path and energy deposition. 
+%
 The last section gather our concluding remarks and perspectives. 
 
-Finally, the SI unit system is used throughout this publication, dropping the Boltzmann constant (temperature in eV) and vectors are noted in bold symbols. 
+The SI unit system is used throughout this publication, the Boltzmann constant is dropped, the temperatures are given in eV and vectors are noted in bold symbols. 
 
 \section{The beam bending of a spatio-temporally incoherent laser pulse}\label{sec:gauss}
-\subsection{Speckle-scale Gaussian pulse beam bending}
-%For simplicity, we will assume  subsequently, as in Ref. \cite[]{POP_Ruyer_2020},  that the electromagnetic waves are forward propagating only, thus excluding any back-scattering. 
-In references \cite{POP_Rose_96,POP_Ruyer_2020}, proof is made that in the asymptotic regime (noted with a $\infty$ exponent) and in the small angle limit,  the transverse averaged Gaussian beam wavevector, $ \langle \mathbf{k}_\perp\rangle$ may be related to plasma parameters through,
- 
+\subsection{Beam bending with the transient regime}
+In reference \cite{POP_Rose_96}, proof is made that in the small angle limit,  the transverse averaged beam wavevector, $ \langle \mathbf{k}_\perp\rangle_{\mathbf{k}_\perp}$ may be related to the plasma electron density fluctuations, $\delta n_e$, through 
   \begin{align}
-\frac{1}{k_0} \frac{d \langle \mathbf{k}_\perp \rangle^\infty    }{d x} \cdot& \frac{ \mathbf{v}_d }{ \vert \mathbf{v}_d \vert } = \frac{d\theta^\infty}{dx}= - \frac{n_0 }{n_c}  \frac{  I_0 }{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}   \frac{\beta_\mathrm{k/f}^{(D)} }{ \sigma}     
-  \, ,\label{eq:bbinf} \\
-  \beta_\mathrm{k/f}^{(2)} &=  \Im\left[\alpha_\mathrm{k/f}\left(\frac{k_yv_d}{\vert k_y\vert}\right)\right] \frac{k_y}{\vert k_y\vert}  \, ,\label{eq:beta2} \\
-  \beta_\mathrm{k/f}^{(3)} &=\frac{1}{2^{1/2}}\int_{0}^{\pi/2} d\theta \cos(\theta)\Im\left[ \alpha_{\mathrm{k/f}}\left( v_d \cos(\theta) \right)  \right]  \, ,\label{eq:beta3} 
+\frac{1}{k_0} \frac{d \langle \mathbf{k}_\perp \rangle_{\mathbf{k}_\perp}    }{d x} \cdot \frac{ \mathbf{v}_d }{ \vert \mathbf{v}_d \vert } &
+%= \frac{d\theta}{dx} 
+=\frac{-1}{2}\frac{n_e}{n_c}
+\left\langle\nabla_\perp\frac{\delta n_e}{n_e }\right\rangle_\perp \label{eq:bbrate0} \, ,\\
+\left\langle X \right\rangle_\perp &= \frac{ \int d\mathbf{r}_\perp X(\mathbf{r}_\perp)   I(\mathbf{r}_\perp) }{ \int d\mathbf{r}_\perp   I(\mathbf{r}_\perp)} \label{eq:ave}\, , \\
+%
+\left\langle X \right\rangle_{\mathbf{k}_\perp} &= \frac{ \int d\mathbf{k}_\perp X(\mathbf{k}_\perp)   I(\mathbf{k}_\perp) }{ \int d\mathbf{r}_\perp   I(\mathbf{k}_\perp)} \label{eq:avek}\, ,
 \end{align}
-where $D$ is the system dimension and  $\Im$ is the imaginary part of a complex. 
-We introduced,  $k_0=2\pi/\lambda_0$, $n_0$, $n_c$ are the laser wave vector in vacuum, electron and laser critical density respectively, as well as  $\mathbf{v}_{d}$, $ m_{e/i}$, $T_{e/i}$, $v_g$, $I$, the plasma drift velocity (assumed to be the same for electrons and ions), electron/ion, mass, temperature, laser group velocity and intensity respectively. 
-Moreover, either fluid ($f$ subscribe) or kinetic ($k$ subscribe), the above relations recover the same form with, 
+ where we introduced $k_0=2\pi/\lambda_0$, $n_c$, $\mathbf{v}_d$,  the main laser wavevector, critical density and flow velocity, respectively.  Moreover, $\mathbf{r}_\perp$ and $\mathbf{k}_\perp$ are the position and wavevector transverse to the main laser $x$ direction. The transverse averaged in real and Fourier space, $\left\langle \cdot \right\rangle_\perp$ and $\left\langle \cdot \right\rangle_{\mathbf{k}_\perp}$, respectively, are defined through Eqs. \eqref{eq:ave} and \eqref{eq:avek}. 
+The normalized density fluctuations dependence on time and position, $\delta n_e(t,\mathbf{r})/n_e$, will be assumed to follow  the  linearized hydrodynamic equations. In the plasma rest frame and after a transverse Fourier transform [defined hereafter as $ f(\omega,\mathbf{k})=\int f(t,\mathbf{r})e^{-i\mathbf{k}\cdot\mathbf{r}+i\omega t} d\mathbf{r}dt$], the relation between the density fluctuations and the laser intensity $I(\mathbf{k})=I_0g(\mathbf{k})$ verifies, 
 \begin{align}
- \alpha_ \mathrm{k}    & = \frac{-\mathcal{Z}'( \zeta_e) }{2}\frac{\mathcal{Z}'( \zeta_i)   }{  \mathcal{Z}'( \zeta_i) +\mathcal{Z}'( \xi_e)\frac{ T_i }{  ZT_e} } \, ,\label{eq:drakek}
+    \left(\frac{\partial^2}{\partial t^2} + 2\gamma_0 \vert \mathbf{k}\vert \frac{\partial}{\partial t} +c_s^2 \mathbf{k}^2\right)\frac{\delta n_e}{n_e } = \nonumber\\ 
+   A_{\vert \mathbf{k}\vert}   \frac{c_s^2 \mathbf{k}^2I_0}{n_cv_gT_e} \frac{\alpha_k}{\alpha_f}g(\mathbf{k}) e^{i\mathbf{v}_d \cdot \mathbf{k}t}\, . \label{eq:4}
+\end{align}
+Here, we introduced the sound speed, $c_s=[(Z_iT_e+3T_i)/m_i]^{1/2}$,  the  electron/ion, mass and  temperature, $ m_{e/i}$ and $T_{e/i}$,  the normalized acoustic Landau damping rate, $\gamma_0=\nu/\vert k\vert c_s$, the laser group velocity, $v_g=c\sqrt{1-n_e/n_c}$ and  light speed in vacuum, $c$.
+The ratio, $\alpha_k/\alpha_f$, where 
+\begin{align}
+ \alpha_ \mathrm{k} [M_0\cos(\theta)]   & = \frac{-\mathcal{Z}'( \zeta_e) }{2}\frac{\sum_i \mathcal{Z}'( \zeta_i)\frac{  Z_iT_e}{ T_i } \frac{  Z_in_e}{ n_i }  }{\mathcal{Z}'( \xi_e)+ \sum_i \mathcal{Z}'( \zeta_i)\frac{  Z_iT_e}{ T_i } \frac{  Z_in_e}{ n_i }   } \, ,\label{eq:drakek}
  \\
 \zeta_{e/i} &=  \frac{-\mathbf{k}_\perp\cdot\mathbf{v}_{d} }{\vert \mathbf{k}_\perp \vert } \sqrt{ \frac{ m_{e/i} }{ 2T_{e/i} }  }   \label{eq:xi} \, , \\
- \alpha_f  & =\frac{\kappa}{1-\mathbf{M}_0^2\cos^2\theta +2i\gamma_0 \vert\mathbf{M}_0\vert \cos\theta}  \, .  \label{eq:drakeh} \\
- \cos(\theta)& = \frac{\mathbf{k}_\perp\cdot\mathbf{v}_{d} }{\vert \mathbf{k}_\perp \vert \vert \mathbf{v}_{d}\vert  } 
+ \alpha_f[M_0\cos(\theta)]   & =\frac{\kappa}{1-\mathbf{M}_0^2\cos^2\theta +2i\gamma_0 \vert\mathbf{M}_0\vert \cos\theta}  \, ,  \label{eq:drakeh} \\
+ \cos(\theta)& = \frac{\mathbf{k}_\perp\cdot\mathbf{v}_{d} }{\vert \mathbf{k}_\perp \vert \vert \mathbf{v}_{d}\vert  } \, , \label{eq:hydro} \\
+ \kappa &= \frac{Z_iT_e}{m_ic_s^2} \, ,
 \end{align}
-We also made use of the Mach number $\mathbf{M}_0= \mathbf{v}_d/c_s$ and of of $\mathcal{Z}'$, the first order derivative of the plasma dispersion function \cite{Fried_Gell-Mann_1960}.
- The normalized ion acoustic Landau damping rate verifies 
-  \begin{align}
-\gamma_0 &= \sqrt{\frac{2T_i }{m_ic_s^2 }} 
-\Im\left[
-\frac{  \mathcal{Z}'\left(x_i\right) 
-+\frac{T_i}{Z_iT_e}  \mathcal{Z}'\left(x_e\right)   }{  \mathcal{Z}''\left(x_i\right) +\left(\frac{T_i}{Z_iT_e}\right)^{3/2}\sqrt{\frac{Z_im_e}{m_i}}  \mathcal{Z}''\left(x_e\right)    }
-\right]\, , \nonumber \\
-x_{e/i}&=\sqrt{\frac{m_{e/i}c_s^2}{2T_{e/i}}}\, .\label{eq:g0}
-\end{align}
-Choice has been made in this study to use the exact formula as the usual approximation [Eq. (10) in Ref. \cite{POP_Ruyer_2020}] yields an overestimation for some plasma parameters of interest subsequently.
-For a Maxwellian plasma, the above equations show that   the beam bending rate remains independent of the drift velocity component parallel to the laser propagation, hence,  in the following,  we will assume  that $\mathbf{v}_e=\mathbf{v}_i=\mathbf{v}_d$ and is  transverse to the  $x$-axis.
-
-The beam bending transient regime, as derived in 
- Ref. \cite[]{POP_Ruyer_2020}, \emph{i.e.} based on a fluid plasma response, does not depend on the dimension of the system. Hence, the temporal evolution of the deflection angle reads $d \theta/dx  =f(t)d \theta^{\infty}/dx $   where $f(t)$ tends toward unity in a few Landau damping times.
- 
-One can also include the thermal corrections of Ref. \cite[]{Bychenkov_2000} to account for non local thermal effects on the density fluctuation amplitude.
-In that case,
+introduced in Ref. \cite[]{POP_Ruyer_2020}, is a correction that ensures convergence to the  kinetic asymptotic limit for highly Landau damped plasmas. 
+We also introduced the Mach number $\mathbf{M}_0= \mathbf{v}_d/c_s$ and $\mathcal{Z}'$, the first order derivative of the plasma dispersion function \cite{Fried_Gell-Mann_1960}.
+Finally, the factor $A_k$, on the r.h.s of Eq. \eqref{eq:4},  accounts for nonlocal thermal effects on the density fluctuation amplitude~\cite[]{POP_Brantov_1998,Bychenkov_2000} and writes,
 \begin{align}
-     \hat{\Phi}_k&= -A_k\frac{I(\mathbf{k}_\perp)}{2n_c T_e v_g} \, ,\nonumber\\
-     A_k(u)   &= \frac{1}{2} +Z\left( \frac{0.074}{u^2}+ \frac{0.88}{u^{4/7}} + \frac{2.54}{1+5.5u^2} \right) \, ,\nonumber \\ 
-     u &=\vert \mathbf{k}_\perp \vert\lambda_\mathrm{mfp} \sqrt{Z_i}\label{eq:nl}\, ,
+     A_k(u)   &= \frac{1}{2} +Z_i\left( \frac{0.074}{u^2}+ \frac{0.88}{u^{4/7}} + \frac{2.54}{1+5.5u^2} \right) \Omega\, ,\nonumber \\ 
+     u &=\vert \mathbf{k}_\perp \vert\lambda_\mathrm{mfp} \sqrt{Z_i}\label{eq:nl}\, , \nonumber\\
+     \Omega &= 1\,  \mathrm{if}\, \vert \mathbf{k}_\perp\cdot \mathbf{v}_d\vert/\nu_{ei}<1 \, \mathrm{and}\, 0 \, \mathrm{elsewhere, } 
 \end{align}
-where $\lambda_\mathrm{mfp}$ is the electron mean free path. 
-Hence, the time-dependent Gaussian beam bending deflection rate with non-local corrections follows,
-  \begin{align}
-  \frac{d\theta }{dx}= - f(t) A_k \frac{n_0 }{n_c}  \frac{  I_0 }{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}   \frac{\beta_\mathrm{k/f}^{(D)} }{ \sigma}     
-  \, .\label{eq:bbf} 
+where $\lambda_\mathrm{mfp}$ is the electron mean free path and where $A_{\vert \mathbf{k}\vert}=1/2$ in the collisionless limit. 
+%
+As mentioned in Ref. \cite[]{Berger_2005}, this correction can be used provided the acoustic wave frequency, $\vert \omega_s\vert= \vert kv_d \vert $, remains smaller than the electron-ion collisionnal frequency, $\nu_{ei}$ (momentum exchange). This condition is contained in the factor $\Omega$ which ensures that $A_k$ recovers its collisionless value when it is not fulfilled. Easily introduced in our theoretical estimates, such factor remains far more challenging to implement  in a self-consistent numerical modeling where other laser-plasma effects are accounted for, in which case $\Omega$ is set to unity (see Sec. \ref{sec:gauss3D}).
+%
+Likewise, the Landau damping factor, $\gamma_0$ in Eqs. \eqref{eq:drakeh} and \eqref{eq:ftransient}, may be expressed in the collisionless limit (Landau) [Eq. (10) in Ref. \cite{POP_Ruyer_2020}], as in Sec. \ref{sec:parax}.
+When collisionnal effects are not negligible, the fit as introduced in Ref. \cite[]{LPB_casanova_1989} will be used and leads to a dependence of $\gamma_0$ on $\vert \mathbf{k}\vert $, as in Sec. \ref{sec:icf}.
+
+In the laboratory frame, the solution of Eq. \eqref{eq:4}, with the initial conditions $\delta n_e(t=0)=\partial \delta n_e(t=0)/\partial t = 0$, reads,  
+\begin{align}
+    \frac{\delta n_e(\mathbf{k},t)}{n_e} = &\alpha_k A_{\vert \mathbf{k}\vert}\frac{I_0 g(\mathbf{k})  }{n_cv_gT_e} f(\mathbf{k},t)\, , \\
+    f(\mathbf{k},t)=&1+a_+e^{g_+c_s\vert\mathbf{k}\vert t}- a_-e^{g_-c_s \vert\mathbf{k} \vert t}\, , \label{eq:ftransient} \\
+    a_\pm =&\frac{-iM_0\cos(\theta) -\gamma_0\mp i\sqrt{1-\gamma_0^2}}{2i\sqrt{1-\gamma_0^2}} \, , \\
+    g_\pm =& -\gamma_0\pm i\sqrt{1-\gamma_0^2} -iM_0 \cos(\theta) \, .
 \end{align}
+Here, $M_0=\vert \mathbf{M}_0\vert $ where $\mathbf{M}_0$ and $ \mathbf{v}_d$ are assumed to be normal to the main laser $x$-axis. $D$ represents the number of dimensions normal to the main laser axis. The combination of the above density fluctuations, written in the Fourier space  with Eq. \eqref{eq:bbrate0}   implies an inverse Fourier transform and leads to,
+\begin{align}
+  \frac{d\theta }{dx}= \frac{1}{k_0} \frac{d \langle \mathbf{k}_\perp \rangle_\perp    }{d x} \cdot \frac{ \mathbf{v}_d }{ \vert \mathbf{v}_d \vert }
+=\frac{-1}{2}\frac{n_e}{n_c} \frac{I_0 }{n_cv_gT_e} \times \nonumber \\
+ \int \frac{d^D \mathbf{k}}{(2\pi)^D} \frac{ i \mathbf{k}\cdot\mathbf{v}_d }{\vert \mathbf{v}_d \vert} \alpha_k A_{\vert \mathbf{k}\vert}g(\mathbf{k})  f(\mathbf{k},t)\left\langle  e^{i \mathbf{k}\cdot  \mathbf{r}_\perp}\right\rangle_\perp\, . \label{eq:bb1}
+\end{align}
+Hence, the estimation of $\left\langle e^{i \mathbf{k}\cdot  \mathbf{r}_\perp}\right\rangle_\perp$ with Eq. \eqref{eq:ave} leads to the final beam bending rate. It depends on the Fourier transform of the  transverse intensity profile, $g(\mathbf{k})$, and on the system dimension. 
+References  \cite[]{POP_Rose_96,POP_Hinkel_1998} assume Gaussian beams while Ref. \cite[]{POP_Rose_97} addresses RPP beams, in the asymptotic regime only.  
+In order to avoid any assumption on the SSD beam temporal spectrum, as in Refs. \cite[]{POP_Ghosal_1997,POP_Rose_Ghosal_98}, 
+ we will simply  relate the averaged SSD beam centroid deflection to the speckle  contributions using  Gaussian transient regime estimates \cite[]{POP_Ruyer_2020}.
+
+\subsection{ Gaussian speckle in two and three dimensions }\label{sec:gauss3D}
 
 \begin{figure}
 \begin{tabular}{c}
-\includegraphics[scale=0.39]{Figure_1.eps}
+(a) $\log_{10}(I \, [\mathrm{W/cm^2}])$\\
+\includegraphics[scale=0.46]{I_Hem1_100ps.png}\\
+%\includegraphics[scale=0.39]{Figure_1.eps} 
+(b) $d\theta / dx$\\
+\\\includegraphics[scale=0.45]{Fig1b.eps} \\
+(c) $\langle d\theta/dx\rangle_{\tau_\mathrm{SSD} }$, $\tau_\mathrm{SSD}=7\, \rm ps$  \\
+\\\includegraphics[scale=0.45]{Fig1c.eps} \\
 \end{tabular}
 \caption{ \label{fig:2d3dnl}
-Product $A_k  \beta_\mathrm{k}^{(D)}$, as predicted by Eqs. \eqref{eq:beta2}-\eqref{eq:beta3} and \eqref{eq:nl},  for a He$^{2+}$ plasma  with $T_e=2\,\rm keV$, $Z_iT_e/T_i=3$ and $n_e=10^{21}\,\rm cm^{-3}$ and as a function of the Mach number.
-The collisionless case in black lines corresponds to $A_k\equiv 1/2$.}
+(a) Intensity profile at $100\,\rm ps$ of a laser beam with $f_\sharp=6.5$, $I_0=4\times 10^{14}\,\rm W/cm^2$, a SSD with $\omega_m=2\pi14.25\,\rm GHz$ and  $\Delta=3$. The beam propagates through a homogeneous He$^{2+}$ plasma with $T_e=2\,\rm keV$, $T_i=500\,\rm eV$ and  $n_e/n_c=0.1$. The position of the laser centroid is marked by the black plain line.
+(b) Deflection rate as a function of time as predicted by Eqs. \eqref{eq:bbf} and \eqref{eq:G3}  for a C$^{6+}$ plasma for various Mach numbers in the fluid [Eq. \eqref{eq:drakeh}] and kinetic formalism [Eq. \eqref{eq:drakek}].
+(c) Gaussian deflection rate averaged over $7\,\rm ps$ as predicted by  Eqs. \eqref{eq:bbssd},  \eqref{eq:G3m} and \eqref{eq:G2m} (using $S=1$ and $\beta=1$)  for a He$^{2+}$ (dashed lines), C$^{6+}$ (dotted lines) and Au$^{50+}$ (plain lines) plasmas as a function of the Mach number. Three dimensional predictions obtained with Hera are superimposed as red circles (see appendix \ref{sec:hera3d} for details).
+(b,c) The laser  has an averaged intensity of $I_0=1\times 10^{15}\,\rm W.cm^{-2}$ and $\lambda_0=0.35\, \rm \mu m$, $f_\sharp=8$,  $T_e=2.5\,\rm keV$, $T_i=1$ keV, $n_e=0.1 n_c$.
+}
 \end{figure}
+Hence,  using $g(\mathbf{k})=\exp(-\mathbf{k}^2\sigma^2/8)$ with $\sigma =\lambda_0f_\sharp$   and assuming a $y$-aligned drift velocity, the deflection rate may be recast as 
+  \begin{align}
+  \frac{d\theta}{dx}=  -\frac{n_e }{n_c} \frac{ I_0 }{ 2 v_g n_c T_e } \frac{1}{\sigma}\mathcal{G}^{(D)}(t)\, .\label{eq:bbf} 
+  \end{align}
+  with, in three dimensions, 
+\begin{align}
+  \mathcal{G}^{(3)} =\frac{\sigma^3}{8\pi} \Im \int_{-\infty}^\infty dk  k^2  A_{k}e^{-k^2\sigma^2/4} \times\nonumber\\
+\int_0^\pi d\theta \alpha_{k/f}[M_0\cos(\theta)] f(k,t) \, .\label{eq:G3}
+\end{align}
+In two dimensions, 
+  \begin{align}
+     \mathcal{G}^{(2)} = \frac{\sigma^2}{\sqrt{8\pi}} \Im \alpha_{k/f}(M_0)  
+ \int d k \vert k\vert  A_{k}e^{-k^2\sigma^2/4} f(k,t) \, .\label{eq:G2} 
+\end{align}
+The time dependence  of the bending rate in two and three dimensions differs. 
+The  propagation of a spatially and temporally smoothed laser beam in a flowing plasma, illustrated in Fig. \ref{fig:2d3dnl}(a) in 2D (numerical details given in Sec. \ref{sec:hera2d}), presents a deflection of its centroid that can be related to the hot spots contribution.
+Figure \ref{fig:2d3dnl}(b) illustrates the temporal evolution of a single three dimensional Gaussian speckle  of focal, $f_\sharp=8$, and wavelength, $\lambda_0=0.35\,\rm\mu m$, in a fully ionized carbon plasma as predicted by Eqs. \eqref{eq:bbf} and \eqref{eq:G3}. Although the deflection is larger for a flow with $M_0=1$ (red lines) in the asymptotic limit ($t> 100 \,\rm ps$), the bending at resonance remains slightly weaker than the case $M_0=0.8$ (as black lines) or  $1.2$ (as blue lines) during a part of the transient regime ($<10 \,\rm ps$). In the transient, the hot spot bending rate is non resonant around a Mach number of the order of unity. 
 
-Figure \ref{fig:2d3dnl} compares the value of  $\mathcal{A}  \beta_\mathrm{k}^{(D)}$ in two and three dimensions (dashed and plain lines respectively) for a collisionless plasma (for $\mathcal{A} \equiv1/2$ in black) and with the non-local correction of Eq. \eqref{eq:nl} (in red).  
-The beam bending rate is more peaked around Mach numbers, $M_0=\vert v_d\vert /c_s$, close to unity for a planar geometry than in the  realistic case. Although the peaked value is roughly twice smaller for $D=3$ than for $D=2$,  it becomes larger in the realistic geometry when $M_0\gtrsim 1$.
-Finally,  the thermal correction of Eq. \eqref{eq:nl} increases as expected the bending rate. For this choice of parameters ($T_e=2\,\rm keV$ and $n_e=10^{20}\,\rm cm^{-3}$), $A_k\simeq 0.75$ and should increase as the electron mean-free-path becomes shorter.
-
-\subsection{Bending of a finite coherence-time speckle} \label{sec:speckle}
-In light of our speckle-scale modeling, we propose to  quantify the effect on the laser deflection of
-the broadening of the its temporal spectrum (SSD).
-This technics, routinely used in multi-kilojoule class laser facilities, are  known to  qualitatively  reduce  the beam bending deflection   \cite{POP_Delamater_2000} by   causing the speckles to vanish and change position periodically \cite[]{phd-Duluc,POP_Duluc_2019}.
-The ensuing finite speckle coherence time can be 
-related to the modulator modulation period, $\omega_m$,  and  number of modes, $\Delta $,  through $\tau_\mathrm{SSD}=[(2\Delta+1)\omega_m]^{-1}$ \cite[]{Skupski_1989} and is usually of the order of a few picoseconds for $0.35\rm\mu m$-wavelength lasers. 
-These time scales, much shorter than an acoustic Landau damping time $1/\nu \gtrsim 10\,\rm ps$, do not allow the beam bending to reach its asymptotic limit, thus yielding smaller deflection angles.
-
-
-\begin{figure}
-\begin{tabular}{c}
-%(a) $\log_{10}[ \Delta \theta (\tau_\mathrm{SSD})]$\\
-\includegraphics[scale=0.39]{paramssd.png}%\\
-%(b) $\log_{10}[ \Delta \theta_\mathrm{SSD}]$\\
-%\includegraphics[scale=0.39]{Dthmoy_15e14_2e-1nc_f8_3w.png}\\
-\end{tabular}
-\caption{ \label{fig:thssd}
-Three dimensions deflection angle in  logarithmic scale  and  radiants, $\langle \Delta \theta \rangle_\mathrm{SSD}$ from Eq. \eqref{eq:dthssd} as a colormap and black contours and  $  \Delta \theta (\tau_\mathrm{SSD})$  as red contours using Eq. (31) of Ref. \cite{POP_Ruyer_2020}, \emph{i.e.} for a speckle of length $2\pi f_\sharp^22\pi/k_0$.  Use is made of the non local correction and the parameters are  $I_0=1.5\times 10^{15}\, ,\rm W.cm^{-2}$, $2\pi/k_0=0.35\,\rm\mu m$ and $f_\sharp=6.5$ in a He$^{2+}$ plasma  with $Z_iT_e/T_i=3$, $n_e=1.8\times 10^{21}\,\rm cm^{-3}$ and $M_0=0.9$.}
-\end{figure}
-We will mimic the effect of the SSD on the  resulting speckle scale beam bending rate  by assuming that the speckles disappear after a time $\tau_\mathrm{SSD}$. Hence the temporally averaged deflection angle is related to  Eq. \eqref{eq:bbf} through
-\begin{equation}\label{eq:dthssd}
-\langle \Delta \theta \rangle_\mathrm{SSD}=\frac{1}{\tau_\mathrm{SSD}}\int_0^{\tau_\mathrm{SSD}} \Delta \theta(t)dt\, .
+\subsection{ Spatially and temporally smoothed laser beam } \label{sec:gaussssd}
+Assuming the speckles are independent and of Gaussian form, we may now relate the time-averaged beam centroid deflection rate to the  contribution of the speckles ($s$-subscript) through, 
+\begin{align} 
+  \frac{d\theta_\mathrm{SSD}}{dx}  =   \left\langle \sum_s\frac{d\theta_s}{dx}\right\rangle_t \, , \label{eq:dtheta_ssd}
+  \end{align}
+  where   $\langle X\rangle_t$ is the  average of $X$ over a $2\pi/\omega_m$ period (where $\omega_m$  is the main modulation frequency of the SSD device). The speckle bending rate, $d\theta_s/dx$, stems from Eq. \eqref{eq:bbf}.
+Due to diffraction, $\sigma$ and $I_0$ respectively become $\sigma[1+(x-x_s)^2/z_c^2]^{1/2}$ and  $I_s/[1+(x-x_s)^2/z_c^2]^{D/2}$. The speckle reaches its maximum intensity $I_s$ at the position $x_s$, and has a Rayleigh length of  $z_c=\pi f_\sharp^2\lambda_0$, leading to 
+  \begin{align}
+ \frac{d\theta_\mathrm{SSD}}{dx}  &=   -S    \frac{n_0 }{n_c}  \frac{  I_0 }{ 2 v_g n_c T_e }    \frac{\langle \mathcal{G}^{(D)} \rangle_\mathrm{\tau_\mathrm{SSD}}}{ \sigma}      \, ,  \label{eq:bbssd}
+   \end{align}
+ with 
+   \begin{align}\label{eq:S}
+   S &=\sum_s \frac{I_s/I_0}{\sqrt{1+ {(x-x_s)^2}/{z_c^2}}^{D+1}}  \, . \nonumber \\
+  \end{align}
+The factor $S$, introduced in Eqs. \eqref{eq:bbssd}-\eqref{eq:S}, encompasses the speckle-dependent factors such as the speckle intensities, their spatial profiles and positions. As $S$ encloses the complex RPP-induced speckle dynamics,  we consider it as a parameter fitted from the paraxial simulations. This procedure further smooths out the hot spot contributions over the whole pulse.  This approximation implies to neglect the speckle disparities resulting from the variability of their intensity. 
+To mimic the effect of the SSD on the beam bending rate,  the speckles pattern is assumed to last a  time $\tau_\mathrm{SSD}$, proportional to the coherence time $T_\mathrm{SSD}$. The latter is  related to the modulation depth, $\Delta$ (defined hereafter at $3\omega$), and to the  modulation frequency of the SSD device, $\omega_m$, through $T_\mathrm{SSD}=2\pi/\omega_m (2\Delta +1)$. Introducing the factor, $\beta$, the parameter $\tau_\mathrm{SSD}$, referred as the speckle coherence time, writes,  
+\begin{equation}
+    \tau_\mathrm{SSD} = \beta \frac{2\pi}{\omega_m (2\Delta +1)} =\beta T_\mathrm{SSD}\, . \label{eq:taussd}
 \end{equation}
-Figure \ref{fig:thssd} illustrates as a colormap and black contours for a moderately intense speckle (for  $2\pi/k_0=0.35\,\rm\mu m$,  $I_0=1.5\times 10^{15}\, ,\rm W.cm^{-2}$ and a focal number  $f_\sharp=6.5$, propagating in  a  He$^{2+}$ plasma with $n_e=0.2n_c$ and $M_0=0.9$),   the Gaussian pulse averaged   deflection  in logarithmic scale. As expected $\langle \Delta \theta \rangle_\mathrm{SSD}$ is maximized for large times and small temperature, reaching $\simeq 0.1$ (\emph{i.e.}, $100\, \rm \mu m$ per millimeter of propagation) at $(\tau_\mathrm{SSD}, T_e) \simeq (6 \, \mathrm{ps}, 200\,\mathrm{eV})$.
-Moreover, a modest but not negligible, averaged deflection angle of $\sim 0.01$ (\emph{i.e.}, $10\, \rm \mu m$ per millimeter of propagation)  is also predicted for  
-$(\tau_\mathrm{SSD}, T_e) \sim (6 \, \mathrm{ps}, 1\,\mathrm{keV})$.
-Looking at the maximum deflection  in red contours, much larger values are reached such as $\Delta \theta(\tau_{\tau_\mathrm{SSD}})=0.1$  as soon as $(\tau_\mathrm{SSD}, T_e) \sim (6 \, \mathrm{ps}, 300\,\mathrm{eV})$ or $\Delta \theta(\tau_{\tau_\mathrm{SSD}})=0.01$   $  (6 \, \mathrm{ps}, 2\,\mathrm{keV})$, demonstrating a large scattering disparities over the speckles life-time. Hence, the  hot spot scale beam bending should result not only in a deviation of the laser  pulse centroid but also in the broadening of its  width. 
+This second factor represents the efficiency of SSD on the beam bending and  will be deduced from the paraxial simulations. 
 
-The beam bending that occurs during the propagation of a realistic laser pulse results from the superposition of the  various  speckles contributions. 
-Although Fig. \ref{fig:thssd} illustrates the  bending of  a moderate intensity speckle,  predicting the amount of energy effectively deflected  requires to account for all the intensity fluctuations which form the realistic beam. 
+Introducing the temporal mean of a function X(t) over a SSD period,  as
+\begin{equation}\label{eq:avet}
+    \langle X \rangle_\mathrm{\tau_ \mathrm{SSD}}= \frac{1}{\tau_\mathrm{SSD}} \int_0^{\tau_\mathrm{SSD}} X(t)dt \,,
+\end{equation} 
+Eqs. \eqref{eq:G3} and \eqref{eq:G2} lead to,
+\begin{align}
+\langle  \mathcal{G}^{(3)}\rangle_\mathrm{\tau_\mathrm{SSD}} \simeq\frac{\sigma^3}{8\pi} \Im \int_{-\infty}^\infty dk  k^2  A_{k}e^{-k^2\sigma^2/4} \times\nonumber\\
+\int_0^\pi d\theta \alpha_{k/f}[M_0\cos(\theta)] \times\nonumber\\
+\left( 1+a_+\frac{ e^{g_+c_s\vert k\vert \tau_\mathrm{SSD}}-1}{g_+c_s\vert k\vert \tau_\mathrm{SSD}}- a_-\frac{e^{g_-c_s \vert k \vert \tau_\mathrm{SSD}}-1}{g_-c_s \vert k \vert \tau_\mathrm{SSD}} \right) \, ,\label{eq:G3m}
+\end{align}
+and,  
+\begin{align}
+   \langle  \mathcal{G}^{(2)}\rangle_\mathrm{\tau_\mathrm{SSD}} \simeq \frac{\sigma^2}{\sqrt{8\pi}} \Im \alpha_{k/f}(M_0)  
+ \int d k \vert k\vert  A_{k}e^{-k^2\sigma^2/4}\times \nonumber \\  \left( 1+a_+\frac{ e^{g_+c_s\vert k\vert \tau_\mathrm{SSD}}-1}{g_+c_s\vert k\vert \tau_\mathrm{SSD}}- a_-\frac{e^{g_-c_s \vert k \vert \tau_\mathrm{SSD}}-1}{g_-c_s \vert k \vert \tau_\mathrm{SSD}} \right) \, .\label{eq:G2mt} 
+\end{align}
+%%%%%%%%%%%%%%
+The above analytical expression  may be simplified by isolating the dominant contribution in the quadrature of Eq. \eqref{eq:G2mt}.
+Following the appendix of Ref. \cite[]{POP_Ruyer_2020}, we  may relate $\langle  \mathcal{G}^{(2)}\rangle_\mathrm{\tau_\mathrm{SSD}}$ to
+the maximum of  $\vert k \vert \exp(-k^2\sigma^2/4) $
+  reached for $k=k_c=2^{1/2}/\sigma$ which, combined to $\int \vert k\vert \exp(-k^2\sigma^2/4) dk=4/\sigma^2$, leads to  
+\begin{align}
+   \langle  \mathcal{G}^{(2)}\rangle_\mathrm{\tau_\mathrm{SSD}} \simeq \sqrt{\frac{2}{\pi}} \Im \alpha_{k/f}(M_0)  
+  A_{k_c}\times \nonumber \\ 
+  \left( 1+a_+\frac{ e^{g_+c_s\vert k_c\vert \tau_\mathrm{SSD}}-1}{g_+c_s\vert k_c\vert \tau_\mathrm{SSD}}- a_-\frac{e^{g_-c_s \vert k_c \vert \tau_\mathrm{SSD}}-1}{g_-c_s \vert k_c \vert \tau_\mathrm{SSD}} \right) \, .\label{eq:G2m} 
+\end{align}
+The mean deflection angle is related to the set of Eqs. \eqref{eq:dtheta_ssd}-\eqref{eq:bbssd}, and Eq. \eqref{eq:G3m} or Eq. \eqref{eq:G2m}.
+The dependence on the Mach number of the above predictions are illustrated in Fig.  \ref{fig:2d3dnl}(c)  for a He$^{2+}$ (dashed line), a C$^{6+}$ (dotted line) and a Au$^{50+}$ (plain line) $10\%$-critical  plasma (with $T_e=2.5\, \rm keV$ and $T_i = 1\,\rm keV$) and for a speckle coherence time of $\tau_\mathrm{SSD}=7\,\rm ps$. The deflection rate, as expected not resonant around $M_0=1$, is an increasing function of the ion ionisation number due to the thermal correction of Eq. \eqref{eq:nl}. 
+A larger density causes the mean free path to decrease, thus increasing the local energy deposition and therefore enhancing the hole boring. 
+%
+The regime of validity of Eq. \eqref{eq:nl} ($\omega=kv_d<\nu_{ei}$) enclosed in the factor $\Omega$, may be assessed by estimating the critical Mach number $M_c = \nu_{ei}/[ c_sk _0/(2f_\sharp) ]$ above which the thermal correction is not valid anymore.  When $Z_i=2$ (we obtain $M_c \sim 0.7$), the factor $A_k$ is $\sim 20\%$ above its collisonless value  implying  a poor impact of thermal effects whatever the value of $\Omega$. However, the carbon deflection rates present slight inflections located around $M_0=M_c \simeq 1.7$, directly due to the condition $\omega=kv_d<\nu_{ei}$. 
+Additionally, the  large value of $M_c \simeq 25$  obtained for the Au$^{50+}$ case  demonstrates the validity of the thermal corrections of Eq. \eqref{eq:nl} in this material.
 
-%So as to capture the  bending rates of a SSD beam, we propose to average the deflection angle (using Eq. \eqref{eq:dtht}) over a   coherence time, giving
-%\begin{align}
-%\Delta \theta_\mathrm{SSD} &= %\frac{1}{\tau_\mathrm{SSD}}\int_0^{\tau_\mathrm{SSD}} \Delta %\theta(t)dt  \, ,\label{eq:dthssd}
-%\end{align}
-%When using the above deflection angle in our ray tracing model, we not only reduce the effect of SSD on the speckle dynamics  to a coherence time \cite{phd-Duluc}, but we also  choose to neglect  the first $\tau_\mathrm{SSD} $ of the bending dynamics.
+As expected, the 2D values (as blue lines) systematically overshoot the realistic geometry predictions. 
+Because of the very large values of $Z_iT_e/T_i$ in the gold case  ($Z_iT_e/T_i=125$), the kinetic and fluid 3D deflection rates (as black and red lines respectively) concur \cite[]{POP_Ruyer_2020}.  For the same reason, accounting for an accurate distribution of gold ionisation levels at non-local-thermodynamic-equilibrium as predicted by DEDALE \cite[]{HEDP_Gilleron_2015} [in the multi-ion species formulation of Eq. \eqref{eq:drakek}],  only weakly reduces by $\sim 10\%$ the final bending rates compared to the mono-fluid average ionisation number model, as used in this study.
 
-\section{Hydrodynamic beam bending of a realistic pulse}
+Finally, we performed five 3D Hera paraxial simulations of  Gaussian beam propagating in a C$^{6+}$ 10\% critical plasma with the laser and plasma parameters of Fig. \ref{fig:2d3dnl}(c) and for various Mach numbers. The simulation parameters and the method to measure the deflection rates are detailed in appendix \ref{sec:hera3d}. The thermal corrections of Eq. \eqref{eq:nl} (with $\Omega$ sets to 1) have been accounted for. The average over the first $7 \, \rm ps$ of the beam centroid deflection angles [$\langle d\theta/dx \rangle_\perp \rangle_t$, Eqs. \eqref{eq:ave}, \eqref{eq:avet}] at the simulations exit plane are illustrated as red circles in Fig. \ref{fig:2d3dnl}(c) and  agree very well with the corresponding theoretical prediction (obtained with $S=\beta=1$) represented by the dotted-dashed red line. This confirms the validity of Eqs.  \eqref{eq:bbssd} and \eqref{eq:G3m} for a Gaussian beam. 
+In the following,  the time averaged centroid deflection rate of an SSD beam will be related to the  above Gaussian speckle predictions by fitting the two scalar variables, $S$ and $\beta$, using dedicated 2D and 3D paraxial numerical results.
 
-\subsection{Effect of temporal smoothing on the beam bending of a  $3\omega$-laser}\label{sec:parax}
+\section{Fit and validation of the bending rates by the means of paraxial hydrodynamic simulations }
+\label{sec:parax}
 \begin{figure*}
 \begin{tabular}{ccc}
-(a) H$^+$, $T_e=2\, \rm keV$,  $T_i=300\, \rm eV $ & (b) H$^+$, $T_e=1\, \rm keV$,  $T_i=100\, \rm eV $&(c) He$^{2+}$, $T_e=2\, \rm keV$, $T_i=500\, \rm eV $\\
-\includegraphics[scale=0.32]{bbssd_H300.eps}&
-\includegraphics[scale=0.32]{bbssd_H100.eps}&
-\includegraphics[scale=0.32]{bbssd_He.eps}\\
+(a) H$^+$, $T_e=1\, \rm keV$,  $Z_iT_e/T_i=3$ & (b) H$^+$, $T_e=1\, \rm keV$,  $Z_iT_e/T_i=10$&(c) He$^{2+}$, $T_e=2\, \rm keV$, $Z_iT_e/T_i=8$\\
+$I_0=6\times 10^{14}\, \rm W/cm^2$,  $M_0=0.87$ &$I_0=10^{14}\, \rm W/cm^2$,  $M_0=1$  &$I_0=10^{14}\, \rm W/cm^2$,  $M_0=1.$ \\
+\includegraphics[scale=0.32]{Fig2a.eps}&
+\includegraphics[scale=0.32]{Fig2b.eps}&
+\includegraphics[scale=0.32]{Fig2c.eps}\\
 (d)&(e)&(f)\\
-\includegraphics[scale=0.32]{rayparaxH300.eps}&
-\includegraphics[scale=0.32]{rayparaxH100.eps}&
-\includegraphics[scale=0.32]{rayparaxHe.eps}
+\includegraphics[scale=0.32]{Fig2d.eps}&
+\includegraphics[scale=0.32]{Fig2e.eps}&
+\includegraphics[scale=0.32]{Fig2f.eps}
 \end{tabular}
 \caption{ \label{fig:ssd} 
-(a,b,c) Beam centroid, defined as $\Delta y =\int I(y)y dy/\int I(y) dy$, at $x=2\,\rm mm$ of the intensity profile resulting from HERA paraxial simulations (plain lines) for spectral dispersion mode numbers (defined at three $\omega$)
-$\Delta =9$ (black), $15$ (red) and $33$ (blue). The temporal averaged of HERA centroids between $20$ and $90\,\rm ps$ correspond to the circles. 
-The predictions of Eq. \eqref{eq:bbssd} are superimposed as dashed lines for $S=1$.
-(d,e,f) Laser centroid as a function $x$ from the modified ray tracing scheme implemented in HERA (dahsed lines, Eq. \eqref{eq:raybb} with $S=1$) and from the HERA paraxial simulations as plain lines. The paraxial results are averaged between $20$ and $90\,\rm ps$ and the colors code for the same spectral dispersion strengths than panels (a,b,c).
+(a,b,c) Beam centroid defined though Eq. \eqref{eq:ave} and resulting from Hera paraxial simulations (plain lines) for a SSD modulation depth of  $\Delta =3$ (green)
+$\Delta =9$ (black), $15$ (red) and $33$ (blue). The circles correspond to temporally averaged centroids during a SSD modulation period, after the transient (between $20$ and $90\,\rm ps$). 
+The predictions of Eq. \eqref{eq:bbssd} and \eqref{eq:G2m} are represented by the dashed lines for $(S,\beta)=(0.5,8)$ and using the fluid plasma response [Eq. \eqref{eq:drakeh}] without thermal corrections [$A_k=0.5$, Eq. \eqref{eq:nl}].
+(d,e,f) Laser centroid against the propagation distance $x$ from the modified ray tracing scheme implemented in Hera (dashed lines, Eq. \eqref{eq:raybb} with $S=0.5$ and $\beta=8$) and from the Hera paraxial simulations as plain lines. The paraxial results are averaged between $20$ and $90\,\rm ps$ and the colors code for the same spectral dispersion strengths than panels (a,b,c). 
 }
 \end{figure*}
-As the pulse deflection is reduced by its loss of temporal coherence,  large simulation domains have to be considered in order obtain clean quantitative comparisons.
-We thus aim  at building and validating a realistic pulse speckle scale beam bending model   in light of 2D HERA hydrodynamic simulations \cite[]{Loiseau_2006} [combining Eqs. \eqref{eq:beta2}, \eqref{eq:drakeh} and \eqref{eq:bbf}], therefore excluding kinetic effects such in multi-ion species plasmas or moderate $Z_iT_e/T_i$-values. In Sec. \ref{sec:icf} however, use will be made of the kinetic deflection rates.
+\begin{figure}
+\begin{tabular}{c}
+(a) 2D centroid displacement vs. $f_\sharp$ \\
+\includegraphics[width=0.35\textwidth]{Fig3a.eps}\\
+(b) Impact of polarization smoothing\\
+\includegraphics[width=0.35\textwidth]{Fig3psHe.eps}\\
+(c) 3D paraxial simulations vs. theory \\
+%\includegraphics[width=0.45\textwidth]{Dy3d.eps}
+%\includegraphics[width=0.45\textwidth]{bb_theorie3D.eps}
+%\includegraphics[width=0.35\textwidth]{Fig3b.eps}
+\includegraphics[width=0.35\textwidth]{Fig3c.eps}
+\end{tabular}
+\caption{ \label{fig:ssd3d} 
+Centroid displacement after 2 mm of propagation,  resulting from two dimensional Hera simulations \cite[]{Loiseau_2006} averaged between 20 and 90 ps (a,b) and from 3D Parax \cite[]{POP_Riazuelo_2000} simulations averaged between 130 and 200 ps (c). The plasma parameters are similar to Figs. \ref{fig:ssd}(c,f), with a field coherent time of $T_\mathrm{SSD}=3.7\,\rm ps$ (or a modulation depth of $\Delta=9$) and a fixed $f_\sharp=8.88$ for (c).
+(a) The predictions from the ray tracing scheme and from Eq. \eqref{eq:bbssd} with $S=0.5$ and $\beta=8$ correspond to the triangles and the black plain line respectively. A curve, $y\propto 1/f_\sharp$, is superimposed as a black dashed line. 
+(c) The  predictions of Eq. (45) of Ref. \cite[]{POP_Rose_Ghosal_98} correspond to the red dashed line.
+The case TSSD$\parallel \mathbf{v}_d$, TSSD$\perp \mathbf{v}_d$ and LSSD correspond to $(S,\beta)=(1.7,2)$, $(1.7,1)$, and $(S,\beta)=(3.4,1)$, respectively.
+}
+\end{figure}
 
-As the value of the acoustic wave damping rate, $\nu$,  is critical for quantitatively capture the beam bending physics, we used in our HERA simulations a damping acoustic term (here noted $D$) acting on the component of the conservation of momentum  transverse to the laser direction: 
-\begin{align}
-(\partial_t + \mathbf{v}_d\cdot \nabla_\perp) \mathbf{v}_\perp + D  = - c_s^2\nabla_\perp\left(\frac{  \delta n }{n_0} +  \Phi  \right) \, ,\label{eq:hydro2} \\
-D=  \mathrm{FT}^{-1}\left[ 2 c_s  \gamma_0 \vert k \vert   \hat{\mathbf{v}}_\perp  \mathrm{H}( k_0 - \vert k \vert )\right]\, ,
-\end{align}
-where $\mathrm{H}$ is the step function. Similar damping terms are used in other hydrodynamic codes \cite{phd-PEML,Masson_2006,Huller_2008} and ensure, despite expensive kinetic simulation results,  an accurate modeling of the acoustic wave propagation. 
-In order to reach more realistic ICF-conditions than in Ref. \cite[]{POP_Ruyer_2020}, the choice has been made to use a laser wavelength of $\lambda_0=0.35\, \rm\mu m$  and  an electron density of $n_e = 0.1n_c$.
-A 2D domain of size  $L_x\times L_y = 2\, \rm{mm} \times 1.024 \, \rm{mm}$ with the left boundary condition located at $x_\mathrm{BC}=0$ will be used. 
-A RPP and SSD beam  or a ray tracing beam propagating in the $x$ direction were injected from the left boundary.
+We aim  at finalizing  and validating our speckle scale SSD beam bending model in light of paraxial 2D  Hera \cite[]{HERA_Jourdren_2005,Loiseau_2006} and 3D Parax  \cite[]{POP_Riazuelo_2000} hydrodynamic simulations. We will thus use in this section the fluid plasma response in our model [Eq. \eqref{eq:drakeh}]. Then, more realistic  predictions, such as in Sec. \ref{sec:icf}, will be made using the kinetic deflection rates. 
+Ideally, the kinetic flow induced deflection should be fitted with kinetic  codes (such as particle-in-cell) -a deed still out of reach with up to date supercomputers-.
+In both Hera and Parax codes, the linear Landau damping operator is computed in the Fourier space \cite[]{Berger_98,POP_Rose_96,Masson_2006}   and the light is propagated through a paraxial solver.
+However, Hera accounts for the full plasma fluid response and Parax uses a linearized hydrodynamics module applied transversely to the main laser direction that will moderate the subsequent required numerical load. 
+Hence, in order to keep the bending in the small angle validity regime of our simulations,  the thermal corrections of Eq. \eqref{eq:nl} are ignored in this section. 
+For sake of simplicity and comparison purposes, the bremsstrahlung energy deposition is also neglected. Note that as the pulse deflection is reduced by its loss of temporal coherence,  large simulation domains have to be considered in order to obtain clean quantitative comparisons.
+
+\subsection{Two dimensional HERA simulations }
+\label{sec:hera2d}
+In order to reach more realistic ICF-conditions than in Ref. \cite[]{POP_Ruyer_2020}, the choice has been made to use a laser wavelength of $\lambda_0=0.35\, \rm\mu m$.
+The 2D domain has a size of  $L_x\times L_y = 2\, \rm{mm} \times 1.024\, \rm{mm}$.
+A RPP and SSD beam  propagating in the $x$-direction was injected from the left boundary.
 The focal spot is located at the center of the simulation domain, $x_\mathrm{foc}=1\, \rm mm$ with a focal number of $f_\sharp = 6.5$, a temporal
 and spatial envelope following
 \begin{align}
-    \hat{g}(y) &= \exp(-\vert y\vert ^o/2\sigma_g^o)  \,  \label{eq:g}\\
-    h(t) &= \mathrm{min}(t/\tau_h,1) \,\label{eq:h}
+    g(y) &= \exp(-\vert y\vert ^ 5/2\sigma_g^{ 5}) %\text{\pas le facteur 2 est vraiment comme ça ?} \,  
+    \label{eq:g}\, ,\\
+    h(t) &= \mathrm{min}(t/\tau_h,1) \, ,\label{eq:h}
 \end{align}
-with $\tau_h=1\, \rm ps$,  $o=5$ and $\sigma_g = 300\,\rm \mu m$. 
-For sake of simplicity and comparison purposes, the bremsstrahlung energy deposition is neglected in HERA-ray and HERA-parax and the non-local thermal correction of Eq. \eqref{eq:nl} is ignored in this section.  
-Moreover a barotropic gas is assumed in the hydrodynamics simulations.  An electron density of $n_e =0.1n_c $ is used  and a $y$-aligned drift velocity, $v_y=v_d$, is imposed on both the electron and ion populations.
-The  spectral dispersion  has a modulation frequency of  $\omega_m = 14.25\,\rm GHz$ and a mode number of alternatively $
-\Delta = 9$, $15$ and $33$ (defined at $2\pi/k_0=0.35\,\rm\mu m$) corresponding to a speckle coherence time of 
-$\tau_\mathrm{SSD} =2\pi/\omega_m/(2\Delta+1) =3.69$, $2.26$ and  $1.04 \,\rm ps$ respectively. 
-The paraxial simulations mesh sizes follow $dx = 0.32\, \rm \mu m$ and $dy =0.0625\, \rm \mu m$. 
-%Our paraxial, gathered in Fig. \ref{fig:ssd}, evidence a strong deformation of the beam spatial envelop for low SSD mode numbers [Fig. \ref{fig:ssd}(a)]. When $\Delta$ increases to $15$ (b) or $33$ (c), less warping and a more symmetric intensity profile is    obtained, indicating that less speckle-scale beam bending occurs.
-%Figure \re{fig:} evidence a temporal oscillation of the beam centroid at the simulation exit plane, around a finite value. Indeed, 
+with $\tau_h=1\, \rm ps$ and $\sigma_g = 300\,\rm \mu m$. 
+The plasma with an electron density of $n_e =0.1n_c $, has a $y$-aligned drift velocity, $v_y=v_d$ and is assumed barotropic.
+The  spectral dispersion  has a modulation frequency of  $\omega_m = 2\pi\times 14.25\,\rm GHz$ and a mode number of alternatively $
+\Delta =3$, $9$, $15$ and $33$ (defined at $\lambda_0=0.35\,\rm\mu m$) corresponding to a field coherence time of 
+$2\pi/\omega_m/(2\Delta+1) =10$, $3.69$, $2.26$ and  $1.04 \,\rm ps$ respectively. 
+The paraxial simulations mesh sizes are $dx = 1.95\, \rm \mu m$ and $dy =0.0625\, \rm \mu m$.  
 
-Due to the phase modulation, the beam's center oscillates as soon as its injection and  on a period given by the modulation frequency, $2\pi/\omega_m\simeq 70\,\rm ps$. This leads to the centroid periodic movement at the simulation exit plane as shown as  plain lines in Figs.  \ref{fig:ssd}(a,b,c). The SSD ray tracing scheme that we will introduce aims at predicting the temporal averaged of the beam centroid deflection only, illustrated for the paraxial results as circles in Figs. \ref{fig:ssd}(a,b,c), therefore neglecting the spatial envelope's motion.
-Assuming the hot spots to be independent and of Gaussian form, we may relate the time-averaged beam centroid deflection rate to the  contribution of the speckles ($s$-subscript) through, 
-\begin{align}
-  \frac{d\theta_\mathrm{SSD}}{dx}  =   \langle \sum_s\frac{d\theta_s}{dx}\rangle_t \, ,
-  \end{align}
-  where   $\langle x\rangle_t$ is the averaged of $x$ over a $2\pi/\omega_m$ period.
-We will now, while using  Eq. \eqref{eq:bbf}, replace $\sigma$ by $\sigma\sqrt{1+(x-x_s)^2/z_c^2}$ and $I_0$ by $I_s/[1+(x-x_s)^2/z_c^2]^{1/2}$, where $x_s$ and $I_s$ are the speckle centre  and intensity respectively and where $z_c=\pi f_\sharp^2\lambda_0$, leading to 
-  \begin{align}
- \frac{d\theta_\mathrm{SSD}}{dx}  &=   -S f_\mathrm{SSD} A_k \frac{n_0 }{n_c}  \frac{  I_0 }{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}}   \frac{\beta_\mathrm{k/f}^{(D)} }{ \sigma}      \, , \nonumber \\
- S &=\sum_s \frac{I_s/I_0}{1+\frac{(x-x_s)^2}{z_c^2}}  \, , \nonumber \\
-  f_\mathrm{SSD}  &= \langle f(t) \rangle_t = \int_0^{\mathrm{min}(t,\tau_\mathrm{SSD})} f(t) \frac{dt}{\mathrm{min}(t,\tau_\mathrm{SSD})} \, . \label{eq:bbssd}
-  \end{align}
-Hence, $ f_\mathrm{SSD}$ is a scalar that mainly depends on the local value of $\nu\tau_\mathrm{SSD}$, and which simplest form may be obtained by approximating $f(t)\simeq 1-e^{-\nu t}$ (thus neglecting the acoustic beamlets)  so that, in the following, use will be made of 
-\begin{equation}
-     f_\mathrm{SSD} \simeq \frac{\nu\tau_\mathrm{SSD}+ e^{-\nu\tau_\mathrm{SSD}} -1}{\nu\tau_\mathrm{SSD}}\, . \label{eq:fssdf}
-\end{equation}
-The factor $S$ in Eq. \eqref{eq:bbssd}, which encloses the impact of the speckle dynamics on the beam deviation, will in the following, be assimilated to a scalar thus smoothing out the hot spot contributions over the whole pulse.  This final approximation implies to neglect the speckle scattering disparities resulting from the variability of their intensity (see Sec. \ref{sec:speckle}).
-Our 2D paraxial hydrodynamic simulations suggest that $S\simeq 1$, as used in the following, and  lead to satisfactorily agreement between the theoretical predicitons [dashed lines in Figs. \ref{fig:ssd}(a,b,c)] and the temporally averaged paraxial results (as circles). Note that the  value of $S$ could  change in three dimensional systems. 
+Due to the phase modulation, the beam's center oscillates as soon as its injection, with a period corresponding to the modulation frequency, $2\pi/\omega_m\simeq 70\,\rm ps$. This effect leads to the centroid periodic motion at the simulation exit plane as shown by the  plain lines in Figs.  \ref{fig:ssd}(a,b,c). Note that the SSD beam bending model that we propose only predicts the temporal averaged of the beam centroid deflection, therefore neglecting the spatial envelope's motion.
+
+The beam bending angle measured in the two dimensional paraxial hydrodynamic simulations are well captured by our 2D fluid beam bending model [Eqs. \eqref{eq:drakeh}, \eqref{eq:bbssd}  and \eqref{eq:G2m} while keeping $A_k=0.5$] with $S= 0.5$ and $\beta=8$. This agreement is illustrated in Figs.  \ref{fig:ssd}(a,b,c), by comparing the theoretical predictions of the centroid shift (dashed lines) with the one measured in the simulations (plain lines). The centroid shift issued from Hera are time averaged along a modulation period and are represented by the  circles. This procedure allows to compare the beam centroid displacement against the plasma depth [Figs. \ref{fig:ssd}(d,e,f)]. To this end, we implemented the beam bending model in the ray tracing package of Hera (see Sec. \ref{sec:ray} for details). 
+There again, a good agreement is obtained for the same set of parameters ($S= 0.5$ and $\beta=8$). 
+%\tc{Il faut commenter le fait que ca marche moins bien (courbe rouge et noire figure a) pour un plus gros amortissement (pkoi?)}
+For a large Landau damping rate [Fig. \ref{fig:ssd}(a)], our model loses accuracy. This is probably due to the density response to the  Gaussian  laser spectrum that differs from a realistic pulse.
+As expected, the increase of the  SSD modulation depth ($\Delta$) % defined at $\lambda_0=0.35\,\rm \mu m$) 
+decreases the beam deviation and is fairly well captured by our predictions. 
+
+The dependence of the beam's deflection angle against the f-number ($f_\sharp$) is illustrated in Fig. \ref{fig:ssd3d}(a). Note that, we varied the f-number, keeping constant the mean intensity, $I_0$. Within the anzatz of the  Gaussian beam deflection, the latter should be proportional to $f_\sharp$ (see the integration of a Gaussian beam bending deflection rate  over a Rayleigh length, Eq. (31) of Ref. \cite{POP_Ruyer_2020}). However, assuming $S$ may be replaced by a constant, Eq. \eqref{eq:bbssd} predicts $\theta_\mathrm{SSD}\propto G^{(2)}\left(\frac{\tau_\mathrm{SSD}c_s}{f_\sharp \lambda_0}\right)/f_\sharp=o(1/f_\sharp)$ as illustrated by the plain line in Fig. \ref{fig:ssd3d}(a). Further, although  the speckle-scale contribution to the deflection increases with $f_\sharp$, the inter-speckle distance and  the transient regime amplitude both depend on $f_\sharp$. Hence, smoothed over the whole SSD beam, the resulting centroid deviation decreases faster than $1/f_\sharp$ [see dashed line of Fig. \ref{fig:ssd3d}(a)], a tendency validated by the paraxial predictions (as circles) up to $f_\sharp\simeq 10$. For longer focal length ($f_\sharp=15$), the power of most of the speckles overcomes the self-focusing  threshold \cite[]{POP_Michel_2003} leading to the underestimate of the paraxial deflection by more than a factor of two (and  consistently with Fig. 2(b) of Ref.  \cite{POP_Ruyer_2020}), reminding us that the coupling of the beam bending with other instabilities such as filamentation or self focusing is out of reach of the present model.
+ Figure \ref{fig:ssd3d}(a) also indicates that if the beam effective focal number $f_\sharp$ were to decrease, as expected when plasma smoothing occurs \cite[]{POP_Maximov_2001}, the resulting flow-induced deviation should be exacerbated.
+
+An additional set of four 2D paraxial Hera simulations has been performed in order to assess the impact of PS on the bending rates. Apart from the polarization smoothing added to the beam,  the same plasma and laser parameters as in Figs. \ref{fig:2d3dnl}(c,f) has been adopted and the centroid deviation, averaged over one modulation period (between $20$ and $90\,\rm ps$) after 2 millimeters of propagation is illustrated in Fig. \ref{fig:ssd3d}(b). It is shown that the use of PS slightly decreases the final beam deviation which, in our model corresponds to a reduction of the fitting factor $\beta$ from $8$ to $5$.
+
+\subsection{Three dimensional Parax simulations: SSD effects } \label{sec:fit3D}
+\begin{figure}
+\begin{tabular}{c}
+\includegraphics[width=0.45\textwidth]{riazuello.png}
+\end{tabular}
+\caption{ \label{fig:riazuello}
+Temporal evolution of the beam centroid defined though Eq. \eqref{eq:ave} in the 3D PARAX simulations with $\omega_m=2\pi\times 14.25\,\rm GHz$ and for $\Delta = 5.1$ for TSSD $\perp\mathbf{v}_d$, LSSD (green curve), TSSD $\parallel\mathbf{v}_d$ (red curve) and TSSD $\perp\mathbf{v}_d$+ PS (magenta curve).}
+\end{figure}
+We now analyze three dimensional paraxial simulations performed with the code Parax \cite[]{POP_Riazuelo_2000}. Based on a linearized hydrodynamic, this code has specific field injections and diagnostics to correctly simulate and characterize the different smoothing techniques. 
+
+The laser beam propagates through a $2\,\rm mm$ flowing plasma with $v_d/c_s= 0.9$, with similar plasma parameters than Figs. \ref{fig:ssd}(c,f). The simulations details are given in appendix \ref{sec:parax3d}. Different smoothing configurations have been simulated. The time averaged centroid displacements against the coherence time are presented in Fig. \ref{fig:ssd3d}(c). Four different configurations have been simulated and are summarized in the following. 
+
+In the case of  1D transverse smoothing by spectral dispersion (TSSD) oriented normally to the flow direction,  our numerical results (represented by triangles), exhibits a similar dependence of the beam deviation than in two dimensions. Moreover, using $S=1.7$, $\beta=2$ in the 3D theory (plain lines) correctly reproduces the centroid deviations.
+Equation (45) of Ref. \cite[]{POP_Rose_Ghosal_98}, represented by the red dashed line, predicts the deflection of a beam assuming a Gaussian frequency spectrum. 
+Its spectral width is thus narrower than for a SSD laser beam. Consequently, the beam bending dependence on the speckle coherence time is too steep and the predictions overestimate our numerical results for $\tau_\mathrm{SSD}\gtrsim 5\, \rm ps$.
+
+When the TSSD direction is parallel to the flow, Ref. \cite[]{POP_Rose_Ghosal_98} has evidenced a significantly smaller deflection rate. The corresponding Parax simulations (as crosses) exhibit a deflection rate roughly $\sim 5$ times smaller than in the perpendicular configuration. In this case, the theoretical predictions with $S=1.7$ and $\beta=1$ gives a good agreement (dotted dashed line). Those two cases confirm that for a beam smoothed by 1D transverse SSD, such as on NIF facility, different deviations are to be expected depending on the direction of the flow relative to the smoothing direction.
+Indeed, when the direction of the spectral dispersion is perpendicular to the flow, the beam bending rate depends exclusively on the value of the flow. By contrast, when the direction of the spectral dispersion is parallel to the flow, the speckles are moving along the flow with super sonic velocities. The relevant parameter to assess beam bending is the difference between the flow velocity and the transverse velocity of the speckles, $\Delta v$. In TSSD, the time evolution of the speckle transverse velocity is roughly sinusoidal \cite[]{Videau_1999}. For example, for $\Delta=18$, the maximal transverse velocity reaches $v_y/c \sim 0.004$ which corresponds to $M\sim 3.3$. $\Delta v$ then evolves rather quickly as a function of time and is most of the time far from $c_s$. This explains both the small time averaged value of beam bending and the important oscillations with time that can be seen in Fig. \ref{fig:riazuello} in which we represent the temporal evolution of the beam centroid for $\Delta = 5.1$ in the four simulated configurations for beam smoothing.
+
 %
-%Figures \ref{fig:ssd}(a,b,c) illustrates for three different plasma parameters, the dependence on time of the laser centroid after two millimeters for propagation as predicted by the paraxial HERA simulations and for different spectral dispersion strength. After $\sim 10\,\rm ps$, an oscillation of $\Delta y$ of period $2\pi /\omega_m = 90\,\rm ps$ around an asymptotic limit is evidenced. This oscillations,  observable in vacuum, are due to the motion of the laser centroid caused by the spectral dispersion and is completely ignored from most crude modeling such as ray tracing schemes. A temporal averaged between $t=20\,\rm ps$ and $20+2\pi/\omega_m\simeq 70\,\rm ps$ will thus be applied to our paraxial results [as circles in Fig. \ref{fig:ssd}(a,b,c)] for our predictions. 
-Finally and as expected, the increase of the  mode number ($\Delta$) decreases the beam deviation and is well captured by our model. 
+Additionally, the impact of PS has also been addressed for flows oriented normally to the transverse SSD direction. In our simulations, the polarizations in the near field are in the diagonal configuration as for the inner cones on the NIF facility \cite[]{NIF_user_guide}. 
+Illustrated by  black triangles in Fig. \ref{fig:ssd3d}(c), our 3D Parax simulations fairly agree with our model  for  $(S,\beta)=(0.8,3)$.
+They also suggest a weak  influence of the polarization smoothing on the bending rate, 
+when the coherence time is small  ($T_\mathrm{SSD}< 4\,\rm ps$). For longer coherence time ($\Delta = 5.1$), beam bending appears to be reduced when PS is used in the simulation. This reduction can either be attributed to the uncorrelated spatial speckle distribution between the two polarizations or due to another non-linear effect. Indeed, when PS is not used, beam spreading is noticeable in the simulation (the angular aperture is increased by $\sim 20\%$, the effective $f_\sharp$ decreases from $9$ to $7.5$). The increase of beam bending without PS could be explained by the decrease of $f_\sharp$, as shown in Fig. \ref{fig:ssd3d}(a).
+Given the weak influence of PS, the latter will be neglected when the flow is parallel to the transverse SSD direction.  
+%
 
-\subsection{Accounting for beam bending with spectral dispersion in  ray tracing schemes}\label{sec:ray}
-In this context, the time-averaged centroid deviation rate  may naturally be implemented in a ray tracing scheme as a correction to the well-known refraction deviation rate, by deflecting each ray accordingly to   Eq. \eqref{eq:bbssd}.
-The ray directions and positions ($\mathbf{k}$ and  $\mathbf{r}$ respectively)  therefore verify
+The dependence of the bending rate on the angle between the flow component normal to the main laser axis and the SSD direction, $\phi$, is out of the scope of the study.
+Yet, the value of $\beta$ evolves from  $1$ to $2$ when $\phi=0$ (SSDT$\parallel\mathbf{v}_d$) and $\phi=\pi/2$ (SSDT$\perp\mathbf{v}_d$), respectively. The formula, $\beta(\phi) = 1+\vert \sin(\phi)\vert$, could be well suited to generalized the model to 3D.
+
+%
+Finally, another set of  Parax simulations were performed with  longitudinal temporal smoothing (LSSD), as used on the LMJ facility. In this configuration, the phase shift imposed between the different frequencies is radial, 
+causing the speckles to move mainly longitudinally.
+The results are represented by the red squares in Fig. \ref{fig:ssd3d}(c). The deflection rates are bounded by the two cases SSD$\perp\mathbf{v}_d$ and SSD$\parallel\mathbf{v}_d$ with the advantage to present a value independent of the flow direction. The use in our model of  $(S,\beta)=(3.4,1)$ leads to a correct agreement.
+
+LSSD is more efficient than TSSD for small coherence time only. The LMJ optimum modulation depth is close to $\sim 15$ (defined for $\lambda_0=0.35\,\rm\mu m$) for $\omega_m=2\pi\times14.25\, \rm GHz$ leading to $\tau_\mathrm{SSD}\simeq 2.26\,\rm ps$ so that for the parameters of  Fig. \ref{fig:ssd3d}(c), the overall LMJ  deflection over 2 mm is about $\sim 1\, \rm \mu m$. 
+The NIF currently uses $\tau_\mathrm{SSD}\simeq 6.5\,\rm ps$ ($\omega_m=2\pi\times17\, \rm GHz$  and $\Delta\sim4$) with PS and thus  corresponds to  a larger deflection than for the LMJ configuration ($\sim 10\,\rm \mu m$ and $\sim 3\,  \rm \mu m$ for a flow perpendicular and parallel to the TSSD direction, respectively). 
+As a result, the beam bending mitigation  in high energy laser experiments is efficiently done by increasing the laser temporal spectral width. However, a large spectral width, apart from the associated FM-AM conversion effect that entails the laser performance \cite[]{Penninckx_FMAM,AO_Huang_2017},   may lead to anisotropic deflection rates when the TSSD is used. 
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{|c|c|c|}
+             \hline
+         & $S$ & $\beta$ \\
+         \hline
+         2D SSD                           & 0.5 & 8 \\
+         2D SSD + PS                      & 0.5 & 5 \\
+         3D SSDT$\perp    \mathbf{v}_d$    & 1.7 & 2 \\
+         3D SSDT$\perp    \mathbf{v}_d$+PS & 0.3 & 2 \\
+         3D SSDT$\parallel\mathbf{v}_d$    & 1.7 & 1 \\
+         3D SSDT$\parallel\mathbf{v}_d$+PS & 1.7 & 1 \\
+         3D LSSD                          & 1.7 & 1.5 \\
+         \hline
+    \end{tabular}
+    \caption{ \label{tab:bb}
+    Values of the fitting parameter $S$ and $\beta$ to be used in Eqs. \eqref{eq:bbssd}-\eqref{eq:G2m}.}
+\end{table}
+Before including the present theoretical calculations in a ray tracing scheme, we gathered in table \ref{tab:bb} the values of the fitting parameters as obtained in the different geometries and SSD configurations.
+
+\section{Accounting for beam bending with spectral dispersion in  ray tracing schemes}
+\subsection{Description and validation of the ray tracing scheme}\label{sec:ray}
+The time-averaged centroid deviation rate  may naturally be implemented in a ray tracing scheme as a correction to the well-known refraction effect issued from the Eikonal equation, by deflecting each ray accordingly to   Eq. \eqref{eq:bbssd}.
+The ray direction and position ($\mathbf{k}$ and  $\mathbf{r}$ respectively)  therefore verify
 \begin{align}
-    \frac{d\mathbf{k}}{ds} &=-k_0 \frac{\nabla n_e }{2n_c\eta} -k_0\frac{n_0 }{n_c}  \frac{  S f_\mathrm{SSD} A_kI_0 }{ 4 v_g n_c T_e } \sqrt{\frac{2}{\pi}} \frac{\beta_\mathrm{k/f}^{(D)} }{ \sigma}  \frac{\mathbf{v}_\perp}{\vert \mathbf{v}_\perp \vert }\, \nonumber\\
+    \frac{d\mathbf{k}}{ds} &=-k_0 \frac{\nabla n_e }{2n_c\eta} -k_0   S    \frac{n_0 }{n_c}  \frac{  I_0 }{ 2 v_g n_c T_e }    \frac{\langle \mathcal{G}^{(D)} \rangle_\mathrm{\tau_\mathrm{SSD}}}{ \sigma} \frac{\mathbf{v}_\perp}{\vert \mathbf{v}_\perp \vert}  \, \nonumber\\
         \frac{d\mathbf{r}}{ds} &= \frac{\mathbf{k}v_g}{\omega_0} \, , \nonumber\\
-    \mathbf{v}_\perp&= \mathbf{v}_d - \frac{ \mathbf{v}_d\cdot \mathbf{k}}{\vert  \mathbf{k}\vert^2}\mathbf{k}\, \label{eq:raybb}
+    \mathbf{v}_\perp&= \mathbf{v}_d - \frac{ \mathbf{v}_d\cdot \mathbf{k}}{\vert  \mathbf{k}\vert^2}\mathbf{k}\, \label{eq:raybb}  
+    %\mathbf{v}_\perp&= \mathbf{v}_d - \mathbf{v}_d\cdot \mathbf{e}_L\, \label{eq:raybb}
 \end{align}
-where $s$ is the ray abscissa and $\eta$, the optic index.
+where $s$ is the ray abscissa, $\eta$ the optical index.
 
-The above model has been implemented in a new  ray  tracing module of the hydrodynamical code HERA \cite[]{Loiseau_2006}.
-For solving the ray trajectory, we split the rectangular meshes in four triangles using their diagonals.  In each triangle, the density profile is assumed to be planar allowing to have a continuous density profile in all the simulation domain. 
-Hence, solving the Eikonal equation  in each triangle allows to break the ray trajectory in a row of parabolas ideal for fast computing. 
-Summing the contribution of each rays that pass through a given mesh following Ref. \cite[]{POP_Debayle_2019}, one obtains the local averaged intensity, $ I_0$, used in Eq. \eqref{eq:raybb}.
+The above model has been implemented in a new  ray  tracing module of the hydrodynamic code Hera \cite[]{HERA_Jourdren_2005,Loiseau_2006}.
+For solving the ray trajectory, we split the rectangular meshes of the 2D Hera hydrodynamic module  in four triangles using their diagonals.  In each triangle, the density profile is assumed to be linear allowing to have a continuous density profile in all the simulation domain. 
+Hence, solving the Eikonal equation  in each triangle allows to split the ray trajectory in a sequence of parabolas, ideal for fast computing. 
+Summing the contribution of each rays that pass through a given mesh following Ref. \cite[]{POP_Debayle_2019}, one obtains the local averaged intensity, $ I_0$, used in Eq. \eqref{eq:raybb}. To circumvent the non-linearity, we propose to use the local intensity calculated at the previous hydrodynamic time-step.
+
 So has to mimic the averaged intensity profile at and off best focus, we define a lens position, hereafter at $x_\mathrm{lens}=-10$ m from which rays are shot. 
-The rays departure $y$-positions  on the lens are chosen randomly, and their initial direction points toward a randomly distributed  position at the focal plane (at $x=x_\mathrm{foc}$) which ascertain the power carried by the ray so as to fulfill the required intensity profile at best focus [given by $g(y)$]. 
+The rays departure $y$-positions  on the lens are chosen randomly, and their initial direction points toward a randomly distributed  position at the focal plane (at $x=x_\mathrm{foc}$)  following the measure given by the intensity profile at best focus $g(y)dy$, Eq. \eqref{eq:g}. 
 Finally, the rays are propagated  in vacuum from the lens to the left boundary condition  of the simulation (at $x=x_\mathrm{BC}$).
-In order to avoid statistical bias, the position and directions of the rays are shot at beginning of each time steps. 
-Note that this procedure locally gives a  finite   transverse opening angle to the ray distribution, thus avoiding unphysical thermal filamentation  arising from perfectly parallel as used in Refs. \cite[]{Colaitis_2014,Lefebvre_2018}.
-Finally, a mesh size of    \textcolor{red}{   $dx = 10\, \rm \mu m$ and $dy =10\, \rm \mu m$} is used along with  $10^4$ rays. All other simulations characteristics (equation of states, boundary condition and simulation domain) are identical to the paraxial simulations, as described in \ref{sec:parax}.
+In order to avoid statistical bias, the position and directions of the rays are shot at the beginning of each time steps. 
+Note that this procedure, as used in Refs.  \cite[]{Lefebvre_2018}, locally gives a  finite   transverse f-cone angle to the ray distribution, thus avoiding nonphysical thermal filamentation  arising from perfectly parallel  rays.
+Finally, a mesh size of   $dx = 7.8\, \rm \mu m$ and   $dy =4\, \rm \mu m$ is used along with  $10^4$ rays and $f_\sharp=6.5$. All other simulations characteristics (equation of states, boundary condition and simulation domain) are identical to the paraxial simulations, as described in \ref{sec:parax}.
 
-Until now, we assumed  $\mathbf{v}_d$ to be perpendicular to the main laser axis, which is wrong most of the time in a realistic system. Hence, the axis on which the beam bending contribution in Eq. \eqref{eq:raybb}  lies results from the projection,  $\mathbf{v}_\perp$, of the fluid velocity $\mathbf{v}_d$ on the plane perpendicular to the ray direction, $ \mathbf{k}$.
-Importantly, this modification to the classical ray tracing scheme [Eq. \eqref{eq:raybb}] remains minimal as it does not modify the  ray propagation main algorithm (described above) apart from adding a dependence on the beam intensity of the ray deflection rate. 
-Overall, the centroid deviations resulting from the modified ray tracing module of HERA as dashed lines in Figs. \ref{fig:ssd}(c,d,e) reproduce correctly the temporally averaged paraxial predictions (plain lines) as predicted for the three plasma parameters and three SSD-strength considered.
+Until now, we assumed  $\mathbf{v}_d$ to be perpendicular to the main laser axis. For any flows, the axis along which the beam bending contribution in Eq. \eqref{eq:raybb}  lies results from the projection,  $\mathbf{v}_\perp$, of the fluid velocity $\mathbf{v}_d$ on the plane perpendicular to the beam main direction. 
+Importantly, this modification to the classical ray tracing scheme [Eq. \eqref{eq:raybb}] remains minimal as it does not modify the  ray propagation main algorithm (described above) apart from adding a dependence on the beam intensity of the rays trajectories. 
+Overall, the centroid deviations resulting from the modified ray tracing  module of Hera (using the fluid beam bending rate, Eqs. \eqref{eq:drakeh}, \eqref{eq:bbssd}  and \eqref{eq:G2m} with $A_k=0.5$), as dashed lines in Figs. \ref{fig:ssd}(c,d,e), reproduce correctly the temporally averaged paraxial predictions (plain lines)  for the three plasma parameters and four SSD-strength considered. Moreover,  the use of $S=0.5$ and $\beta=8$ leads to a deviation dependence on $f_\sharp$, validated by the paraxial and theoretical  predictions in Fig. \ref{fig:ssd3d}(a). 
 
-It is important to note that restricting the model to the  beam centroid deviation implies to neglect the  different deflections caused by  the various speckle intensities  and lifetimes,  contributing to the beam spreading as discussed in Sec. \ref{sec:speckle}. Likewise, the forward Brillouin instability \cite[]{POP_Grech_2006,PRL_Grech_2009,phd-Grech} and associated plasma smoothing effects may contribute to enlarge the beam waist, modify the speckle distribution and affect the centroid deviation. 
-Moreover, our crude modeling of the speckle dynamics does not  account for the oscillations of the coherence time and speckle velocity  as characterized in Ref. \cite[]{POP_Cain_Riazuelo_2012}, which also contributes to the fluctuation  of the beam direction. 
+Equation \eqref{eq:raybb} may   be applied in a 2D ray tracing simulation performed in the $(\mathbf{k}_0,\mathbf{v}_d)$-plane (where $\mathbf{k}_0$ is the main laser axis) with the 3D beam bending deflection rates [thus using  $  \langle  \mathcal{G}^{(3)}\rangle_\mathrm{\tau_\mathrm{SSD}}$ instead of  $  \langle  \mathcal{G}^{(2)}\rangle_\mathrm{\tau_\mathrm{SSD}}$, Eqs. \eqref{eq:G2m}, \eqref{eq:G3m}]. Referred subsequently as a 2.5D geometry, this will allow us to estimate the bending rate in a realistic geometry in a cheap 2D simulation, as in Sec. \ref{sec:icf}. 
+%
+%Hence, Fig. \ref{fig:ssd3d}(b) demonstrates that, when using $S=1$ and $\beta = 3$, a correct agreement is reached between our 2.5D fluid ray tracing scheme (plain lines) and the 3D paraxial simulations (as circles).
+%Equation (45) of 
+%\textcolor{red}{
+%Ref. \cite[]{POP_Ghosal_1997},
+%}
+%superimposed as dashed lines, predicts the deflection of beam smoothed by the ISI technique. As the corresponding beam temporal spectrum is assumed to be Gaussian, its spectral width is more narrow than for an SSD laser and consequently, the beam bending dependence on the modulation depth, $\Delta$, is too steep.
 
-\section{Quantifying the beam bending of a  realistic pulse in  ICF conditions}\label{sec:icf}
-\begin{figure*}
+It is worth noting out that restricting the model to the  beam centroid deviation implies to neglect the  different deflections caused by  the various speckle intensities  and lifetimes,  contributing to the beam spreading. Likewise, the forward Brillouin instability \cite[]{POP_Grech_2006,PRL_Grech_2009,phd-Grech} and associated plasma smoothing effects may contribute to reduce the effective speckle waist thereby affecting the final beam centroid deviation \cite[]{POP_Maximov_2001}.
+Figure \ref{fig:ssd3d}(a) demonstrates that the  bending rate decreases faster than $1/f_\sharp$, so that plasma smoothing effects may greatly worsen the impact of beam bending on the propagation of the laser.
+Moreover, our crude modeling of the speckle dynamics does not  account for the oscillations of the coherence time and speckle velocity  as characterized in Ref. \cite[]{POP_Cain_Riazuelo_2012}, which also contributes to the fluctuation  of the beam direction.
+
+\section{Quantifying the beam bending of a  realistic pulse in  ICF conditions}
+\label{sec:icf}
+\begin{figure}
 \begin{tabular}{ccc}
-(a)Total laser power & (b) $\langle Z_i\rangle $& (c) $\langle Z_i\rangle T_e/T_i$
-\\
-\includegraphics[width=0.25\textwidth]{Plasertotale.pdf}&
-\includegraphics[width=0.33\textwidth]{Z5ps.png}
-&
-\includegraphics[width=0.33\textwidth]{ZTesTi5ps.png}\\
-(d)  $f_\mathrm{SSD}$   &
-(e) $n_e/n_c$
-&(f) $d\theta_\mathrm{SSD}/dx$ ($^o/$mm) \\
-\includegraphics[width=0.33\textwidth]{f5ps.png} 
-&\includegraphics[width=0.33\textwidth]{ne5ps.png} 
-&\includegraphics[width=0.33\textwidth]{dtheta5ps.png}\\
-(g) $\log(I\, [\mathrm{W/cm^2}])$, rays with bending &(h)  $\log(I\, [\mathrm{W/cm^2}])$, rays without bending&(i) Lineout along the gold wall\\
-\includegraphics[width=0.33\textwidth]{raybb_FCI2.png} 
-&\includegraphics[width=0.33\textwidth]{raybb_FCI2_nobb.png} 
-&\includegraphics[width=0.33\textwidth]{raybb_FCI2_lineout.eps}
+(a)Total laser power \\
+\includegraphics[width=0.4\textwidth]{Plasertotale.pdf}\\
+ (b) $\langle Z_i\rangle $\\
+\includegraphics[width=0.4\textwidth]{ZFCI2bb_6ns.png}\\
+(c) $T_e$ keV\\
+\includegraphics[width=0.4\textwidth]{Te6ns.png}\\
+(d) $n_e/n_c$\\
+\includegraphics[width=0.4\textwidth]{ne6ns.png} \\
+(e) $\mathbf{v}_\perp /c_s$\\
+\includegraphics[width=0.4\textwidth]{Fig4e.png} %\\
+%(e) $d\theta_\mathrm{SSD}/dx$ ($^o/$mm) \\
+%\includegraphics[width=0.4\textwidth]{dthetasdx6ns.png}\\
 \end{tabular}
 \caption{ \label{fig:icf} 
-Hydrodynamic simulation performed with the code FCI2 of a $1.8$ MJ NIF shot for a diamond ablator imploding capsule in a gold hohlraume with low pressure gaz fill and illustrated in the frame of the inner cone ($y=0$ is the main inner cone axis). 
+Hydrodynamic simulation performed with the code Troll \cite[]{Lefebvre_2018} for the  hybrid B NIF shot N181209 \cite[]{POP_Kritcher_2020,POP_Zylstra_2020,POP_Hohenberger_2020} 
+%of a $1.8$ MJ NIF shot for a diamond ablator imploding capsule in a gold-lined hohlraum with low pressure gas-fill and 
+illustrated in the frame of the inner cone ($y=0$ is the main inner cone axis), at 6 ns. 
 (a) Total power of the main laser drive.
- Averaged local ionisation number, $\langle Z_i\rangle$ (b), $\langle Z_i\rangle T_e/T_i$-ratio (c),
-transient function of Eq. \eqref{eq:fssdf} computed on the local plasma parameters for a speckle coherence time $\tau_\mathrm{SSD}=6\,\mathrm{ps}$ (d) and normalized electron density (e).
-(f) Two dimensional  deflection rate as predicted by Eqs. \eqref{eq:beta2}, \eqref{eq:drakek} and \eqref{eq:bbssd} calculated for    $I_0=3.2\times 10^{14}\,\mathrm{W/cm^2}$.
-(g,h) Intensity profile in log scale as predicted by the modified  (g) and classical (h) ray tracing scheme, Eq. \eqref{eq:raybb}. The ablator and gold wall positions are superimposed as black and red plain lines respectively.   The beam centroid defined as $\int I(y)y dy/\int I(y) dy$ is illustrated as black dashed lines. 
-(i) Intensity lineout along the red plain line in (g,h).
-Panels (b-i) correspond to  $t=5\,\rm ps$.
-%The limits of the inner and outer cone are superimposed on panel (a-c,e) as black dashed and plain lines respectively. 
+ Averaged local ionisation number, $\langle Z_i\rangle$ (colormap saturated to 10), b), electron temperature $ T_e$  (c), normalized electron density $n_e/n_c$ (colormap saturated to $n_e/n_c=0.3$), d) and Mach number of the $y$ flow velocity component (e).
 }
-\end{figure*}
-In order to quantify the beam bending level in realistic conditions, we performed a FCI2 hydrodynamic simulation of a diamond  ablator capsule implosion in a  low gaz-fill hohlraume \cite[]{Lefebvre_2018}.
-One  representative  time was retained,  $5\,\rm ns$, which corresponds  to  the end of the rise of the main drive, as illustrated in Fig. \ref{fig:icf}(a).
-We will here focus on the beam bending of the inner cone, which main axis lies in $y=0$ and propagates  from left to right in  Figs. \ref{fig:icf}(b-f). 
-The beam bending deflection rate is   calculated using the local plasma parameters with the averaged intensity $I_0=3.2\times 10^{14}\,\rm W/cm^2$ and a speckle coherence time of $\tau_\mathrm{SSD}=6\,\rm ps$ using the 2D kinetic formalism  of Eqs.  \eqref{eq:beta2}, \eqref{eq:drakek} and  \eqref{eq:bbssd}, accounting for the non local correction of Eq. \eqref{eq:nl}.
+\end{figure}
+\begin{SCfigure*}
+\begin{tabular}{cc}
+(a) $\log(I\, [\mathrm{W/cm^2}])$, rays with bending &(b)  $\log(I\, [\mathrm{W/cm^2}])$, rays without bending\\
+\includegraphics[width=0.33\textwidth]{bb_Fig5a.png} 
+&\includegraphics[width=0.33\textwidth]{bb_Fig5b.png} \\
+(c) $S_{B}\, [\mathrm{W/mm^3}]$, rays with bending &(d)  $S_{B}\, [\mathrm{W/mm^3}]$, rays without bending\\
+\includegraphics[width=0.33\textwidth]{bb_Fig5c.png} 
+&\includegraphics[width=0.33\textwidth]{Set6ns_withoutbb.png}\\
+(e) $d\theta_\mathrm{SSD}/dx$ (mrad/mm)&\\
+%\includegraphics[width=0.33\textwidth]{dth_withbb_perp_+Z.png} 
+\includegraphics[width=0.33\textwidth]{Fig5e.png} 
+&
+\end{tabular}
+\caption{ \label{fig:icfbb} 
+ Intensity profile (a,b) and deposited power  in the plasma through inverse bremsstrahlung ($S_{B}$, c,d) as predicted by the   2.5D beam bending rate [Eq. \eqref{eq:raybb} with $(S,\beta)=(1.7,1)$] (a,c,e) and classical (b,d) ray tracing scheme.
+ (e) 2.5D deflection rate as predicted by Hera.
+  The material boundaries are superimposed as black lines.
+}
+\end{SCfigure*}
+In order to quantify the beam bending level in realistic conditions, we performed a  2D-axisymmetrical Troll hydrodynamic simulation (see appendix \ref{sec:troll} for details) \cite[]{Lefebvre_2018}  of
+hybrid B NIF shot N181209 \cite[]{POP_Kritcher_2020,POP_Zylstra_2020,POP_Hohenberger_2020}, \textit{i.e.} with 
+a diamond  ablator and a low gas-fill hohlraum.
+One  representative  time was retained,  $6\,\rm ns$, which corresponds  to  the  main power drive, as illustrated in Fig. \ref{fig:icf}(a).
+We will here focus on the beam bending of the inner cone, whose main axis lies  on  $y=0$ and propagates  from left to right in  Figs. \ref{fig:icf}(b-e). 
+The beam bending deflection rate is calculated using the local plasma and laser parameters ($f_\sharp=8$) with a speckle coherence time of $\tau_\mathrm{SSD}=7\,\rm ps$. Use is made of the 3D theoretical kinetic predictions of Eqs. \eqref{eq:drakek}, \eqref{eq:bbssd} and \eqref{eq:G3m} together with the nonlocal correction of Eq. \eqref{eq:nl}. 
+The  TSSD direction is vertical in the NIF chamber \cite[]{NIF_user_guide}, its direction therefore lies in the r-z plane of the hydrodynamic simulation. Owing to the weak effect of the PS, we will thus apply our deflection model with $(S,\beta)=(1.7,1)$, according to table \ref{tab:bb}.
 
-Figures \ref{fig:icf}(a-f), correspond to the local $\langle Z_i\rangle$, $\langle Z_i\rangle T_e/T_i$, $f_\mathrm{SSD}$ and demonstrate that, at $5\, \rm ns$, moderate values of $\langle Z_i\rangle T_e/T_i\le 5$ may be found on the inner beam path, suggesting significant kinetic contributions [see Fig. 3 of Ref. \cite{POP_Ruyer_2020}]. Indeed, as the helium gas is being compressed by the expending  ablator [green region in Fig. \ref{fig:icf}(b)] and gold wall [black region in Fig. \ref{fig:icf}(b)], the ion temperature significantly increases and the electron density remains in the $10\%$ critical density range. Likewise, the electron temperature, in excess of $2$ keV in these regions (not shown), leads to qualitatively small Landau damping rates and  therefore $f_\mathrm{SSD}$-values close to unity [see Fig. \ref{fig:ssd}(d)]. 
-The temporal incoherence is thus not strong enough to significantly alleviate the beam bending, leading to significant deviation rates, as illustrated in Fig. \ref{fig:ssd}(f) in the gaz region and in the carbon ablator. 
-%
-%A deflection rate of $0.1\,\rm ^o/mm$ extending on $2$ mm and a fraction of $0.05\,\rm ^o/mm$ on $2-3$ mm at $3.5$ and $5\, \rm ps $ respectively is therefore predicted which should, once projected on the gold wall  $\sim 3\, \rm mm$  away, should end up in an averaged deviation of $\sim 200\,\rm \mu m$. Additionally, unlike in our academic paraxial simulations, the  beam deviation, far from being homogeneous, is of opposite polarity  at $x\simeq 2$ and $4\, \rm mm$ which should significantly affect the beam pointing, once projected on the gold wall. 
-Note that, at $5\,\rm  ns$, the density of the expended window is of the order of $n_e\sim 10^{-3}n_c$  [see Fig. \ref{fig:icf}(e)]  which is too small for the speckle scale beam bending to occur.
+Figures \ref{fig:icf}(b-e), correspond to the local $\langle Z_i\rangle$, $T_e$, $n_e/n_c$, $y$-flow velocity component, respectively. Note that the colormap is saturated to $\langle Z_i\rangle=10$,  thus the high-Z gold medium is represented by the black areas. The map of the y-velocity component, normalized to the local acoustic speed, suggests that, at $6\, \rm ns$, helium, carbon and gold, with the electronic densities ranging from $n_e\sim 0.05$ to $n_e\sim 0.2$, may be found on the inner beam path with $M_0\sim 1$. Indeed, as the helium gas is being compressed by the expanding  ablator [green region in Fig. \ref{fig:icf}(b)] and gold wall [black region in Fig. \ref{fig:icf}(b)],  the electron density remains in the $10\%$ critical density range. Likewise, the electron temperature, higher than $3$ keV in these regions, leads to qualitatively small Landau damping rates and  therefore to a bending not so far from its large asymptotic limit. 
+Note that, at $6\,\rm  ns$, the density of the expanded window is of the order of $n_e\sim 10^{-3}n_c$  [see Fig. \ref{fig:icf}(d)]  which is too small for the speckle scale beam bending to occur.
 
-Two ray tracing HERA simulations have been performed using the plasma profiles resulting from FCI2  [Figs. \ref{fig:icf}(b-f)] while truncating the high density part at $n_e=0.2n_c$, the first  models the inner cone with the modified scheme of Eq. \eqref{eq:raybb} (g) and the second, with the  classical ray propagation (h). 
-Apart from a larger domain size of $L_x\times L_y = 8 \times 3 \, \rm mm^2$ and the plasma profiles, all other parameters are identical to the ray tracing simulations described in   Sec. \ref{sec:ray}.  The resulting intensity profiles illustrated in Figs. \ref{fig:icf}(g,h) evidence a drastic impact of the beam bending dynamics on the pointing direction.  When accounting for the beam deviation (g), the region located around $x=2\,\rm mm$ tends to deflect significantly the laser toward the ablator (as black plain line) where  both the beam bending rates and the refraction due to the density gradients are important. As a result, a significant part of the laser energy is deviated and does not seem to reach the gold critical surface [as a red plain line, located in the region $\langle Z \rangle>10$ in Fig. \ref{fig:icf}(b) and $n_e\ge 0.2n_c$ in (e)]. Finally, the gaz motion which is downward around $x=2\,\rm mm$ due to the gold expansion and upward at $x=4\,\rm mm$ because of the ablator, along with the refraction of light ends up, not only in a beam centroid deviation but also to a significant beam spreading as illustrated by the lineouts of the laser intensity profile along the gold wall [see  Fig. \ref{fig:icf}(i)].
-Hence, the comparison of Figs. \ref{fig:icf}(g) and (h)  demonstrates that a sensible part of the inner cone is deflected, due to the speckle scale  beam bending, toward the hohlraume main axis and never reaches the high  density and laser-absorbing part of the expending gold. 
-Indeed, the deflection rate in Fig. \ref{fig:icf}(f) of  $\sim \pm 0.05\,\rm ^o/mm$ extending over  $2-3$ millimeters  (which corresponds to a modest averaged deviation of $\sim 200\,\rm \mu m$ once projected on the gold wall), is enough at grazing incidence to significantly modify the beam's refraction.
-As a result, a large difference between the intensity lineouts at the gold wall [red plain line in Figs. \ref{fig:icf}(g,h)] is characterized in Fig. \ref{fig:icf}(i), leading to a much broader profile  and a  centroid shift of roughly one millimeter when accounting for the beam bending physics.
-The deflected beam path could lead to the opposite laser entrance hall 
-and therefore to a possible wave mixing with opposite-side beams. A striking qualitative similarity with experimental measurements ascribed to stimulated Brillouin side scatter or the so-called glint \cite[]{Honda_1998,PRL_Turnbull_2015}  urges to address the possible interweaving of beam bending with these processes and the impact   on  the implosion symmetry in ICF experiments.
+Two ray tracing HERA simulations have been performed using the plasma profiles resulting from Troll profiles at $6\, \rm ns$. Apart from a larger domain size of $L_x\times L_y = 8 \times 3 \, \rm mm^2$, the mesh size of  $dx = 9.7\, \rm \mu m$ and $dy =11.7\, \rm \mu m$, a larger focus, $f_\sharp=8$, a beam waist of 1 mm and the plasma profiles, all other parameters are identical to the ray tracing simulations described in   Sec. \ref{sec:ray} (\emph{i.e.} a fixed plasma profile is imposed).  Figs.  \ref{fig:icfbb}(a,c) present the intensity map and the inverse bremsstrahlung power of the inner cone with the modified scheme of Eq. \eqref{eq:raybb}. Both figures are to be compared with the  classical ray propagation (b,d). The resulting intensity profiles  evidence a weak impact of the beam bending dynamics on the pointing direction.  When accounting for the beam deviation (a), the expanding gold bubble around  $x=2\,\rm mm$ tends to deflect the laser toward the ablator. Indeed, Fig. \ref{fig:icfbb}(e) illustrates the local 2.5D bending rate and shows a slight deviation of $\sim -25 \, \rm mrad/mm$ located in the gold material. Likewise, the compressed helium and a small part of the ablator tends to deviate the other half of the beam   (by $\sim + 25 \, \rm mrad/mm$)  in the direction of the gold wall (upward) thus enhancing the already present focusing effect due to refraction.
+The temporal incoherence of the laser is thus not strong enough to totally suppress the beam bending and compensate the thermal effects, especially in the gold medium, leading to significant deviation rates, as illustrated in Fig. \ref{fig:icfbb}(e). 
+%textcolor{red}{
+Quantitatively, the deposition energy (not accounted for in the Troll simulations) is $0.8\%$ weaker in the gold medium as extracted from our ray tracing simulation  with our beam bending model than without and $4\%$ less power is deposited onto the carbon ablator when the deviation is accounted for.
+%Moreover, the laser energy does not seem to reach the dense part of the gold wall or is absorbed in the dense part or the expanding diamond [see Figs. \ref{fig:icfbb}(c,d)] and about a sixth is able to continue in the direction of the opposite entrance hole. 
+However, the profile of the laser absorption is  modified as it is much more peaked   around $(x,y)\simeq (4.5,0)\, \rm mm$ when  beam bending is included.
+%}
 
-Some  of our paraxial HERA simulations indicate, in addition to the centroid deviation, a contribution to the beam spreading   due to the stimulated forward Brillouin scattering \cite[]{PRL_Grech_2009,POP_Hinkel_1998}. 
-Since our study is limited to the beam centroid deviation, further analysis, including forward scatter and beam spreading, are required in order to properly understand all the physical mechanism able to affect the beam pointing and subsequent laser energy deposition region inside the hohlraume.
-Additionally, ray tracing model with spectral dispersion has been compared to   homogeneous ideal simulations, so that, its   validity should be ensured in   smooth density gradients only. Significant geometrical effects are also to be expected, however,  the three dimensional paraxial simulations required to fit our ray tracing scheme in realistic geometry are out of the scope of this manuscript as we settled with a 2D analysis.
-In the region of large bending rate [$1\,\mathrm{mm} \le x\le 4\,\mathrm{mm}$ in Fig. \ref{fig:icf}(f)], Fig. \ref{fig:2d3dnl} indicates that  the two dimensional geometry overestimates the  3D counterpart by a factor $\sim 2$ at resonance, thus suggesting  an overestimation of the flow  deflection in Figs. \ref{fig:icf}(g-i). 
-Nevertheless, the significant differences evidenced in Fig. \ref{fig:icf}(i) incites us to address the impact of the beam bending physics on the irradiation geometry in three dimensional ICF conditions.
+Importantly, the part of the beam that is specularly refracted by the gold wall is more energetic with  our model  than with the classical ray tracing scheme [see Figs. \ref{fig:icfbb}(a,b) around $(x,y)\simeq (6,-1)\, \rm mm$]. The small flow induced deflections in the gold bubble seem to be sufficient, at grating incidence, to significantly modify the penetration depth of the laser in the dense plasma and its absorption. 
+The resulting deflected beam, of intensity in excess of $10^{13}\,\rm W/cm^2$, could reach the opposite laser entrance hall 
+and therefore  could lead to a possible wave mixing with opposite-side beams. 
+The striking qualitative similarity with experimental measurements ascribed to stimulated Brillouin side scatter or the so-called glint \cite[]{Honda_1998,PRL_Turnbull_2015,abstract_Lemos_Glint}  urges to address the impact of beam bending on  the implosion dynamics in ICF experiments.
 
 \section{Conclusions and prospects}
-Based on a previous publication, we addressed the beam bending physics of RPP and SSD high-energy laser pulse propagating in  ICF-like plasma conditions. 
-By mean of large homogeneous paraxial hydrodynamic simulations, we constructed a 2D ray-tracing model which  quantitatively capture the temporally averaged  centroid deviation  of spatially smoothed pulse  with moderate to large spectral dispersion. The limit of our model appears when  plasma smoothing effects are able to affect significantly the speckle distribution, of importance for small SSD mode numbers or for RPP beams. 
-However, the use of our ray tracing model in realistic conditions demonstrates that significant modifications of the beam propagation properties, possibly affecting the implosion dynamics, results from the speckle scale beam bending in realistic pulses. 
-Hence, the speckle-scale physics  may be included in coarse description of light such as  ray tracing-based schemes, opening the way for a more realistic laser energy deposition in radiative hydrodynamic codes and possibly a more accurate prediction of the implosion symmetry. 
+Based on a previous publication, we addressed the beam bending physics of a realistic (RPP, SSD and PS) high-energy laser beam  propagating in  ICF plasma conditions. 
+By mean of large homogeneous paraxial hydrodynamic simulations, we constructed a 2D and 3D ray-tracing model which  quantitatively captures the temporally averaged  centroid deviation  of realistic  beams.
+The use of our ray tracing model in ICF hybrid B conditions shows a weak modification of the beam propagation properties  resulting from the speckle scale beam bending. Our results  indicate that the flow-induced deviation in the gold bubble is a good  candidate for explaining the anomalous refraction measurements, the so-called  glint \cite[]{Honda_1998,PRL_Turnbull_2015}. Our model may thus be used to predict and assess the impact of this anomalous refraction on the implosion dynamics and wave mixing processes. 
+The impact of beam bending in other ICF scenarios is left for future work. 
 
-Note that, although not presented in this paper, adapting the present model to  three dimensions seems straightforward as the 3D kinetic  beam bending rates have been derived and that the modified ray-tracing scheme, as presented in this study, remains valid in realistic geometry. This may require to run three dimensional paraxial simulations  of a realistic pulse propagation as the fitted parameter  of Eq. \eqref{eq:dthssd}  probably depends on the system geometry.  
-The 3D effects  could somewhat alleviate  the large impact of the beam bending physics on the laser propagation evidenced in this study.
-Additionally, the deviation in multi-ion species plasmas present important kinetic contributions and the corresponding transient regime remain unexplored. 
-In these plasmas,  our ray tracing model fails to be predictive and a dedicated kinetic study is required.
-Moreover, most wave-mixing processes are absent from our analysis, possibly affecting the beam deflection and bringing further complexity to the system \cite[]{POP_Huller_2020}.
+Hence, the speckle-scale physics  may be included in a coarse description of light such as  ray tracing-based schemes, opening the way for a more realistic laser energy deposition model in radiative hydrodynamic codes.
+Achieving more accurate predictions of the implosion symmetry and bang time without resorting to non-physical artefacts such as laser power multipliers \cite[]{POP_Kritcher_2018} may allow   smart ICF designs \cite[]{POP_Vandenboomgaerde_2018,PRL_Depierreux_2020} and a possible control of deleterious laser plasma effects.
+
+Additionally, our ray tracing model with spectral dispersion has been compared to   homogeneous ideal simulations, so that, its   validity should be ensured in   smooth density gradients only. 
+Furthermore, most wave-mixing processes are absent from our analysis, possibly affecting the beam deflection and bringing further complexity to the system \cite[]{POP_Huller_2020}. 
+According to Fig. \ref{fig:ssd3d}(b), the speckle scale beam bending may  be greatly amplified by plasma smoothing effects \cite[]{POP_Maximov_2001,POP_Yahia_2015}. 
+The ICF estimate of Figs. \ref{fig:icfbb}(a,c,e) could thus represents a lower bound of the realistic flow-induced deflection.
+Since our study is limited to the beam centroid deviation, further analysis, including forward scattering and beam spreading \cite[]{PRL_Grech_2009,POP_Hinkel_1998}, are required in order to properly understand all the physical mechanism able to affect the beam pointing and subsequent laser energy deposition region inside the hohlraum.
+
+Furthermore, our theory and simulations in realistic geometries allow to compare the efficiency of the various temporal smoothing techniques  in order to reach control of the beam pointing direction. We confirm that the 1D TSSD suffers from an anisotropic deflection rate and demonstrates that the increase of the SSD modulation depth is an efficient way to mitigate the flow-induced deflection in an ICF-like experiment. 
+
+Finally, a radiative hydrodynamic simulation that would include our  beam bending ray tracing module requires to evaluate the quadrature of Eq. \eqref{eq:G3m} each time a ray exit a cell. As written in this study, this seems  numerically too constraining unless one proceed to a tabulation of the deflection rates or to an accurate fit that would significantly alleviate the computational  load. A possible analytical formula might be obtained following the calculations of Ref. \cite[]{POP_Hinkel_1998}. This is left for a future work.
+
+\section*{Data availability}
+The data that support the findings of this study are available from the corresponding authors upon reasonable request.
 
 \section*{Acknowledgements}
-We acknowledge fruitful discussions with S. Laffite.
- \textcolor{red}{We also acknowledge D. Dureau and the HERA-team for all their work on the HERA code. }
+We acknowledge fruitful discussions with S. Laffite, D. Hinkel,  W. Farmer and important inputs from D. Penninckx and J. M. Di Nicola. We also acknowledge F. Gilleron and R. Piron for the use of the DEDALE model and D. Dureau and O. Morice for their advices on the ray tracing algorithm. We also acknowledge the HERA team for the developments and maintenance of the simulation code.
 This work has been done under  the auspices of  CEA-DAM and
 the simulations were performed using HPC resources at TGCC/CCRT and CEA-DAM/TERA.
+\appendix
+\setcounter{equation}{0} 
+\renewcommand{\theequation}{A\arabic{equation}}
+\section{Three dimensional Hera simulation of the Gaussian beam bending}
+\label{sec:hera3d}
+\begin{figure}
+\begin{tabular}{cc}
+\includegraphics[width=0.24\textwidth]{I3D_bb_z_M08.png} &\includegraphics[width=0.24\textwidth]{I3D_bb_x_mod.png}
+\end{tabular}
+\caption{ \label{fig:hera3d} 
+Intensity profiles [$\rm W/cm^2$] of a 3D Gaussian laser pulse propagating through a flowing ($M_0=0.8$) fully ionized carbon plasma at 10\% to the critical density  as predicted by 3D  Hera simulations.
+(left) Intensity profile in the  plane $(x,y)$ with the flow velocity along the $y$-axis and the main laser direction along the $x$-axis. (right)  Intensity profile in the exit plane. 
+}
+\end{figure}
+For validating the predictions of Sec. \ref{sec:gaussssd},
+five three dimensional Hera simulations of Gaussian beams  have been performed with a wavelength $\lambda_0=0.35\,\rm\mu m$, a maximum intensity $I_0=10^{15}\, \rm  W/cm^2$ and a focal number $f_\sharp = 8$. 
+The homogeneous fully ionized carbon plasma at 10\% to the critical density has a drift velocity along the $y$-direction at a Mack number of $M_0 = 0.4$, $0.8$, $1$, $1.2$, or $1.5$ with $(T_e, T_i) =(2.5 ,1) \, \rm keV$. The size of the simulation domain is $L_x\times L_y \times L_z = 100 \, \mathrm{\mu m} \times ( 40 \, \mathrm{\mu m} )^2$ and is composed of  $50\times512^2$ meshes. The laser is injected from the left boundary at $x=0$  and its focal spot is located at $(x_\mathrm{foc},y_\mathrm{foc},z_\mathrm{foc}) = (50\,\mathrm{\mu m}, 0, 0)$. 
+The laser has a constant temporal profile preceded by a $1\, \rm ps$-long linear rise. 
+Additionally, the Landau damping operator is calculated in the Fourier space transversely to the main laser direction  \cite[]{Berger_98,POP_Rose_96,Masson_2006} and the thermal correction of Eq. \eqref{eq:nl} (while setting $\Omega=1$) is accounted for. 
+
+The resulting intensity profiles at $t=10\, \rm ps$, illustrated in Fig. \ref{fig:hera3d}, unravel a deviation of the beam toward the flow ($y$) direction. 
+The theoretical predictions of Sec.  \ref{sec:gaussssd}, that we aim at validating, gather all the $x$-dependence of the bending rate in the fitting factor, $S$. Hence the comparison of the 3D Hera predictions with Eq. \eqref{eq:bbssd} requires to remove from the simulations results the influence of the $x$-Gaussian laser profile. 
+%
+We thus start by isolating the $x$-dependent factor (waist and intensity), leading in 3D to 
+\begin{equation}
+    \frac{d \theta}{ dx} \simeq \frac{d^2y}{dx^2} = \frac{1}{(1+(x-x_\mathrm{foc})^2/z_c^2)^{3/2}} \frac{d\theta_0 }{dx} \, ,
+\end{equation}
+where $z_c=\pi f_\sharp^2 \lambda_0$ and $d\theta_0 /dx $  is the part of the beam bending rate that is independent of $x$, thus corresponding to Eq. \eqref{eq:bbf}.
+Hence, for $d\theta/dx(x=0) = y(x=0)=0$, the deviation may be related to $d\theta_0 /dx $ through 
+\begin{equation}
+    y \simeq \frac{1}{(1+(L_x-x_\mathrm{foc})^2/z_c^2)^{1/2}} \frac{L_x^2}{2} \frac{d\theta_0 }{dx}\, .
+\end{equation}
+The value $S=1$, imposed in   Sec.  \ref{sec:gaussssd},  corresponds to a deviation that reads $y_0 = 0.5L_x^2d\theta_0 /dx$.
+In summary, in order to extract the relevant time averaged centroid deviation from our 3D Hera simulation, we first compute the centroid deviation, $\langle y \rangle_\perp$ at the exit plane [using Eq. \eqref{eq:ave}], divide it by the factor  $(1+(L_x-x_\mathrm{foc})^2/z_c^2)^{-1/2}\simeq 0.81$ and averaged the obtain results between $t_0$  and $t_0+7\, \rm ps$. We use here  $t_0=1.3 \, \rm ps$  to account for the time required for the laser to reach the simulations exit plane ($\sim 0.3\,\rm ps$) and the $1\, \rm ps$ linear rise of the laser time envelop. 
+
+\section{Three dimensional Parax simulations}
+\label{sec:parax3d}
+\setcounter{equation}{0} 
+\renewcommand{\theequation}{B\arabic{equation}}
+The code Parax   simulates the propagation of electromagnetic waves in a plasma \cite[]{POP_Michel_2003}. 
+%We shall denote by z the main propagation axis, x, y the two transverse axes and t the time, respectively. 
+The propagation of one fixed polarization electromagnetic wave is modeled by one generalized scalar paraxial equation \eqref{eq:parax1} for the electric field amplitude $E$ and a wave equation \eqref{eq:parax2}  for the plasma response in the perpendicular ($y,z$)-plane:
+\begin{align}
+    \Big(&  2i\frac{\omega_0}{c^2}\partial_t  +2ik_0\eta \partial_x +i \partial_x k_0\eta+ \nonumber\\& \nabla_\perp^2-\frac{\omega_0^2}{c^2}\frac{n_e-n_{e0}}{n_c} -\frac{\nu_{ei}\omega_0n_{e0}}{c^2n_c} \Big) E = 0 \, . \label{eq:parax1}
+\end{align}
+Here, $\nu_{ei}$ is the electron–ion collision frequency. Stimulated Raman and Brillouin backscattering do not occur due to the presence of a single paraxial incident wave.  However, both filamentation and FSBS can grow and interact.  
+The plasma density is modeled using a fluid description, where expansion to second order in the field perturbation leads to an ion-acoustic wave driven by the ponderomotive and thermal effects \cite[]{POP_Michel_2003,Walraet_2003}:
+\begin{equation}\label{eq:parax2}
+    \left[  (\partial_t+\nu +v_y \partial_y )^2 -c_s^2 \nabla_\perp^2 \right]\log\left(\frac{n_e}{n_{e0}}\right) = \frac{Z_i}{cm_in_c}\nabla_\perp^2( A_t I ) \, .
+\end{equation}
+Here, $v_y$ stands for a transverse plasma drift assumed to be along the $y$-axis and $\nu$ is the ion acoustic wave damping rate.
+The logarithm saturates the density response and so impedes the blowup of the self-focusing process that would otherwise be induced by the cubically nonlinear Schr\"odinger equation derived from Eq. \eqref{eq:parax1}. 
+Equation \eqref{eq:parax2}  uses the acoustic type of plasma response and accounts for the plasma heating using a nonlocal electron transport model according to \cite[]{POP_Brantov_1998}. The operator $A_t$ in the source term is applied to the laser intensity; it accounts for the inverse bremsstrahlung heating, the ponderomotive effect, and the nonlocal transport. Its spectrum in the Fourier space for the transverse spatial coordinates $y$, $z$ uses the fit as introduced in Ref.  \cite[]{POP_Brantov_1998}.
+
+In the case of PS smoothing, the code models the propagation of two independent electromagnetic waves (the first one polarized along the y-axis, the second one along the z-axis) but the source term of (B2) is computed with the contribution of both electromagnetic waves.
+
+Equation \eqref{eq:parax2} has been derived using  the small amplitude density and temperature hypothesis : $dn_e/n_e \ll1$, $dT_e/T_e \ll 1$  and the  quasi-stationary temperature hypothesis: $dt(T_e) <\nu_{ei} I_0/cn_c$.
+In our simulations, the laser propagates into a 2 mm Helium plasma which is assumed to be uniform with density $n_e(x,y,z,0) =0.1n_c$. $T_e=2\, \rm keV$ and $T_i = 0.5\, \rm keV$. The Landau damping rate has been determined by a kinetic dispersion solver and its value is $\gamma_0=0.031$. The laser averaged intensity is $\langle I_0\rangle= 2\times 10^{14}\, \rm W/cm^2$. This relatively small value has been chosen in order to limit the angular spreading of the beam. The transverse and longitudinal mesh sizes are $dy = dz = 0.75\lambda_0$ (for $\lambda_0.35\, \rm \mu m$) and $dx= 1.6 \, \rm \mu m$, respectively.
+
+
+\section{Troll 2D axisymmetrical simulation}
+\label{sec:troll}
+\setcounter{equation}{0} 
+\renewcommand{\theequation}{C\arabic{equation}}
+Troll is a 3D Arbitrary Lagragian-Eulerian (ALE) radiative hydrodynamic code with unstructured mesh \cite[]{Lefebvre_2018}. The simulation presented in Sec. \ref{sec:icf} was performed in 2D axisymmetrical geometry. We used the latest CEA’s tabulated equations of state and opacities, with a model for NLTE correction on the emissivity. The radiation transport is solved using an implicit Monte-Carlo method and the heat flux using the Spitzer-Härm model, limited to 10\% of the free streaming flux. The lasers are simulated using the classical 3D ray tracing method (without beam bending model), with inverse bremsstrahlung absorption, corrected to account for the Langdon effect. Both the Raman and Brillouin backscattering were measured to be a few percents, and thus, not accounted for. No multipliers were used on the incident laser power.
+
+%\bibliographystyle{aip}
 \bibliography{biblio}
 \end{document}
+
